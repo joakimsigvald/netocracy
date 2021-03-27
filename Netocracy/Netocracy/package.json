@@ -1,0 +1,9 @@
+{
+  "name": "netocracy",
+  "version": "0.0.0",
+  "description": "Netocracy",
+  "main": "app.js",
+  "author": {
+    "name": ""
+  }
+}
