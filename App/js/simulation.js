@@ -45,13 +45,11 @@ var createSimulation = function () {
             return `${strArr.join(', ')} and ${last}`;
         }
 
-        const firstAndLast = name => `${name.first} ${name.last}`;
-
         const tribeless = data.universe.filter(i => !i.tribe);
         const summary =
             `
-Generated tribes ${joinStrings(data.tribes.map(t => t.name))} from ${joinStrings(data.universe.map(t => firstAndLast(t.name)))}.
-${tribeless.length ? joinStrings(tribeless.map(t => firstAndLast(t.name))) : 'None'} ${tribeless.length === 1 ? 'was' : 'were'} left without a tribe.
+Generated tribes ${joinStrings(data.tribes.map(t => t.name))} from ${joinStrings(data.universe.map(t => data.firstAndLast(t.name)))}.
+${tribeless.length ? joinStrings(tribeless.map(t => data.firstAndLast(t.name))) : 'None'} ${tribeless.length === 1 ? 'was' : 'were'} left without a tribe.
 `;
         $('#controlPane').html(summary);
         drawChart();
@@ -126,7 +124,20 @@ ${tribeless.length ? joinStrings(tribeless.map(t => firstAndLast(t.name))) : 'No
             .append("circle")
             .attr("r", d => d.r)
             .attr("fill", d => d.color);
+        labelNode();
     }
+
+    function labelNode() {
+        node.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dx", 0)
+            .attr("dy", ".35em")
+            .attr('pointer-events', 'none')
+            .text(function (d) {
+                return d.label;
+            });
+    }
+
 
     return {
         start: start

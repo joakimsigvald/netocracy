@@ -7,7 +7,7 @@ var createSimulationData = function (chartWidth, chartHeight) {
         {
             index: 0,
             name: { first: 'Howard', last: 'Aiken' },
-            peers: [{ index: 1, trust: 1 }, { index: 2, trust: 1 }, { index: 4, trust: 1 }]
+            peers: [{ index: 1, trust: -1 }, { index: 2, trust: 1 }, { index: 4, trust: 1 }]
         },
         {
             index: 1,
@@ -17,7 +17,7 @@ var createSimulationData = function (chartWidth, chartHeight) {
         {
             index: 2,
             name: { first: 'Noam', last: 'Chomsky' },
-            peers: [{ index: 0, trust: 1 }, { index: 1, trust: 1 }, { index: 3, trust: 1 }]
+            peers: [{ index: 0, trust: 1 }, { index: 1, trust: -1 }, { index: 3, trust: 1 }]
         },
         {
             index: 3,
@@ -142,10 +142,13 @@ var createSimulationData = function (chartWidth, chartHeight) {
                 }
             }
         });
+        tribes.forEach((t, i) => t.index = i);
         return tribes;
     }
 
     // Helpers
+
+    const firstAndLast = name => `${name.first} ${name.last}`;
 
     const removeFrom = (arr, el) => {
         var index = arr.indexOf(el);
@@ -183,6 +186,7 @@ var createSimulationData = function (chartWidth, chartHeight) {
     var data = createNodesAndLinks(chartWidth, chartHeight);
 
     function createNodesAndLinks(chartWidth, chartHeight) {
+        const coloring = createColoring();
         var panelSize = Math.min(chartWidth, chartHeight);
         var nodeMargin = panelSize * Math.sqrt(1 / universe.length) * 0.22;
         var nodes = universe.map(
@@ -192,7 +196,8 @@ var createSimulationData = function (chartWidth, chartHeight) {
                     id: c.index,
                     r: radius,
                     bounds: radius + nodeMargin,
-                    color: 'lightblue'
+                    color: coloring.getColorByIndex(c.tribe ? c.tribe.index : tribes.length, tribes.length + 1, 1),
+                    label: firstAndLast(c.name)
                 };
             });
         var directedLinks = orderedConnections.map(c => createDirectedLink(c.x, c.y, c.strength))
@@ -230,6 +235,7 @@ var createSimulationData = function (chartWidth, chartHeight) {
         connections: connections,
         tribes: tribes,
         nodes: data.nodes,
-        links: data.links
+        links: data.links,
+        firstAndLast: firstAndLast
     };
 }
