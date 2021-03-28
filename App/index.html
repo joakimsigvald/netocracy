@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <div id='vizWindow'>
-        <div id="controlPane">
+    <button onclick="openFullscreen()">Fullscreen</button>
+    <div id='vizWindow' style="background-color:aliceblue">
+        <div id="controlPane" style="height: 80px; margin:10px">
             <div><h1>Netocracy</h1></div>
         </div>
         <div id="viz_panel">
-            <div id="viz_canvas">
+            <div id="viz_canvas" style="background-color: white">
                 <button onclick="startSimulation()">Start simulation!</button>
             </div>
         </div>
     </div>
 </body>
 </html>
+<script type="text/javascript" src="lib/d3/d3.min.js"></script>
 <script type="text/javascript" src="js/index.js"></script>
 <script type="text/javascript" src="js/fullscreen.js"></script>
 <script type="text/javascript" src="js/simulation.js"></script>
 <script type="text/javascript" src="js/simulationData.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript">
 </script>

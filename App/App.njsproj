@@ -33,12 +33,20 @@
     <Content Include="js\fullscreen.js" />
     <Content Include="js\index.js" />
     <Content Include="js\simulationData.js" />
+    <Content Include="lib\d3\API.md" />
+    <Content Include="lib\d3\CHANGES.md" />
+    <Content Include="lib\d3\d3.js" />
+    <Content Include="lib\d3\d3.min.js" />
+    <Content Include="lib\d3\LICENSE" />
+    <Content Include="lib\d3\README.md" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="js\simulation.js" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="js\" />
+    <Folder Include="lib\" />
+    <Folder Include="lib\d3\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets" />
 </Project>

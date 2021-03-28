@@ -1,7 +1,7 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createSimulationData = function () {
+var createSimulationData = function (chartWidth, chartHeight) {
     const threshold = 0.001;
     const universe = [
         {
@@ -66,9 +66,8 @@ var createSimulationData = function () {
         }
     }
 
-    function computeTribes(connections) {
+    function computeTribes(connections, orderedConnections) {
         var tribes = [];
-        var orderedConnections = orderByDecreasingStrength(connections);
 
         const areConnected = (first, second) =>
             first.index < second.index
@@ -177,9 +176,60 @@ var createSimulationData = function () {
 
     const create2DArray = n => Array.from(Array(n), () => Array.from(Array(n), () => 0));
 
+    const connections = computeConnections();
+    const orderedConnections = orderByDecreasingStrength(connections);
+    const tribes = computeTribes(connections, orderedConnections);
+
+    var data = createNodesAndLinks(chartWidth, chartHeight);
+
+    function createNodesAndLinks(chartWidth, chartHeight) {
+        var panelSize = Math.min(chartWidth, chartHeight);
+        var nodeMargin = panelSize * Math.sqrt(1 / universe.length) * 0.22;
+        var nodes = universe.map(
+            function (c) {
+                var radius = panelSize * 0.05;
+                return {
+                    id: c.index,
+                    r: radius,
+                    bounds: radius + nodeMargin,
+                    color: 'lightblue'
+                };
+            });
+        var directedLinks = orderedConnections.map(c => createDirectedLink(c.x, c.y, c.strength))
+        var groupedLinks = directedLinks
+            .reduce(function (r, a) {
+                if (r[a.id])
+                    r[a.id].strength += a.strength;
+                else
+                    r[a.id] = a;
+                return r;
+            }, {})
+        var links = Object.keys(groupedLinks)
+            .map(k => groupedLinks[k])
+            .filter(l => l.strength > 0.1);
+
+        return {
+            nodes: nodes,
+            links: links
+        };
+    }
+
+    function createDirectedLink(sourceId, targetId, strength) {
+        return sourceId > targetId
+            ? {
+                id: sourceId + "-" + targetId,
+                source: sourceId,
+                target: targetId,
+                strength: strength / 10
+            }
+            : createDirectedLink(targetId, sourceId, strength);
+    }
+
     return {
-        computeConnections: computeConnections,
-        computeTribes: computeTribes,
-        getUniverse: () => universe
+        universe: universe,
+        connections: connections,
+        tribes: tribes,
+        nodes: data.nodes,
+        links: data.links
     };
 }
