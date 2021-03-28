@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>Netocracy</h1>
-    <div id='simulationPane'></div>
+    <div id='vizWindow'>
+        <div id="controlPane">
+            <div><h1>Netocracy</h1></div>
+        </div>
+        <div id="viz_panel">
+            <div id="viz_canvas">
+                <button onclick="startSimulation()">Start simulation!</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
-<script type="text/javascript" src="simulation.js"></script>
+<script type="text/javascript" src="js/index.js"></script>
+<script type="text/javascript" src="js/fullscreen.js"></script>
+<script type="text/javascript" src="js/simulation.js"></script>
+<script type="text/javascript" src="js/simulationData.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript">
-    $(document).ready(startSimulation);
 </script>

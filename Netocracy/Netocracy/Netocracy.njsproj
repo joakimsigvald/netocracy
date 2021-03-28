@@ -30,9 +30,15 @@
   <ItemGroup>
     <Content Include="app.js" />
     <Content Include="index.html" />
+    <Content Include="js\fullscreen.js" />
+    <Content Include="js\index.js" />
+    <Content Include="js\simulationData.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="simulation.js" />
+    <Content Include="js\simulation.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="js\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets" />
 </Project>
