@@ -1,16 +1,16 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createSimulation = function () {
+var createGraph = function (simulationData) {
     var chartWidth, chartHeight;
     var svg = d3.select("#viz_canvas").append("svg");
     var chartLayer = svg.append("g").classed("chartLayer", true);
-    var data, simulation, link, node;
+    var graphData, simulation, link, node;
 
-    function start() {
+    function draw() {
         setSize();
-        data = createSimulationData(chartWidth, chartHeight);
-        visualize();
+        graphData = createGraphData(simulationData, chartWidth, chartHeight);
+        drawChart();
     }
 
     function setSize() {
@@ -35,26 +35,6 @@ var createSimulation = function () {
         }
     }
 
-    function visualize() {
-        const joinStrings = strArr => {
-            if (strArr.length == 0)
-                return '';
-            if (strArr.length == 1)
-                return strArr[0];
-            const last = strArr.pop();
-            return `${strArr.join(', ')} and ${last}`;
-        }
-
-        const tribeless = data.universe.filter(i => !i.tribe);
-        const summary =
-            `
-Generated tribes ${joinStrings(data.tribes.map(t => t.name))} from ${joinStrings(data.universe.map(t => data.firstAndLast(t.name)))}.
-${tribeless.length ? joinStrings(tribeless.map(t => data.firstAndLast(t.name))) : 'None'} ${tribeless.length === 1 ? 'was' : 'were'} left without a tribe.
-`;
-        $('#controlPane').html(summary);
-        drawChart();
-    }
-
     function drawChart() {
         simulation = d3.forceSimulation()
             .force('charge', d3.forceManyBody())
@@ -66,14 +46,14 @@ ${tribeless.length ? joinStrings(tribeless.map(t => data.firstAndLast(t.name))) 
         link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
-            .data(data.links)
+            .data(graphData.links)
             .enter();
         link = visualizeLink(link);
 
         node = svg.append("g")
             .attr("class", "nodes")
             .selectAll("circle")
-            .data(data.nodes)
+            .data(graphData.nodes)
             .enter().append("g");
 
         var ticked = function () {
@@ -90,18 +70,18 @@ ${tribeless.length ? joinStrings(tribeless.map(t => data.firstAndLast(t.name))) 
         };
 
         simulation
-            .nodes(data.nodes)
+            .nodes(graphData.nodes)
             .on("tick", ticked);
 
         simulation.force("link")
-            .links(data.links);
+            .links(graphData.links);
 
         visualizeNode();
     }
 
     function setForceCenter() {
         simulation.force("center", d3.forceCenter(chartWidth / 2, chartHeight / 2))
-            .force('x', d3.forceX(chartWidth / 2).strength(0.5))
+            .force('x', d3.forceX(chartWidth / 2).strength(0.5 * chartHeight / chartWidth))
             .force("y", d3.forceY(chartHeight / 2).strength(0.5));
     }
 
@@ -138,8 +118,7 @@ ${tribeless.length ? joinStrings(tribeless.map(t => data.firstAndLast(t.name))) 
             });
     }
 
-
     return {
-        start: start
+        draw: draw
     };
 }
