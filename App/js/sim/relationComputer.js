@@ -22,4 +22,10 @@ var computeRelations = function (universe) {
             updatePeerRelations(0.5 * addition, universe[peer.index], ancestorIndices.concat([peer.index]));
         }
     }
+
+    function truncateLower(relations, n, min) {
+        for (var x = 0; x < n; x++)
+            for (var y = 0; y < n; y++)
+                relations[x][y] = Math.max(min, relations[x][y]);
+    }
 }

@@ -4,20 +4,20 @@ var computeConnections = function (universe) {
     function computeConnectionGrid(relations) {
         const n = universe.length;
         var connections = create2DArray(n);
-        for (var i = 1; i < n; i++)
-            for (var k = 0; k < i; k++)
-                connections[i][k] = relations[i][k] * relations[k][i]
+        for (var x = 1; x < n; x++)
+            for (var y = 0; y < x; y++)
+                connections[x][y] = relations[x][y] * relations[y][x]
         return connections;
     }
 
     function orderByDecreasingStrength(connections) {
         const res = [];
         const n = connections.length;
-        for (var i = 1; i < n; i++)
-            for (var k = 0; k < i; k++) {
-                var strength = connections[i][k];
+        for (var x = 1; x < n; x++)
+            for (var y = 0; y < x; y++) {
+                var strength = connections[x][y];
                 if (strength) {
-                    res.push({ x: i, y: k, strength: strength });
+                    res.push({ x, y, strength });
                 }
             }
         res.sort((a, b) => b.strength - a.strength);
