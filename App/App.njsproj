@@ -30,6 +30,7 @@
   <ItemGroup>
     <Content Include="app.js" />
     <Content Include="index.html" />
+    <Content Include="js\fun\util.test.js" />
     <Content Include="js\viz\coloring.js" />
     <Content Include="js\sim\relationComputer.js" />
     <Content Include="js\sim\trustCalibrator.js" />

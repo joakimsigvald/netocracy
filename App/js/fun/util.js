@@ -1,8 +1,15 @@
 "use strict";
 
-const removeFrom = (arr, el) => {
+function removeFrom(arr, el) {
     var index = arr.indexOf(el);
     arr.splice(index, 1);
 }
 
-const create2DArray = n => Array.from(Array(n), () => Array.from(Array(n), () => 0));
+function create2DArray(n) {
+    return Array.from(Array(n), () => Array.from(Array(n), () => 0));
+}
+
+module.exports = {
+    removeFrom,
+    create2DArray
+}
