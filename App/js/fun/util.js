@@ -9,7 +9,9 @@ function create2DArray(n) {
     return Array.from(Array(n), () => Array.from(Array(n), () => 0));
 }
 
-module.exports = {
-    removeFrom,
-    create2DArray
+if (typeof module !== 'undefined') {
+    module.exports = {
+        removeFrom,
+        create2DArray
+    }
 }

@@ -76,7 +76,7 @@ var createGraph = function (simulationData) {
         simulation.force("link")
             .links(graphData.links);
 
-        visualizeNode();
+        node = visualizeNode(node);
     }
 
     function setForceCenter() {
@@ -99,15 +99,21 @@ var createGraph = function (simulationData) {
             .attr("style", function (l) { return "stroke-opacity: " + Math.min(1, l.strength); });
     }
 
-    function visualizeNode() {
+    function visualizeNode(node) {
         node.append("g")
-            .append("circle")
-            .attr("r", d => d.r)
-            .attr("fill", d => d.color);
-        labelNode();
+            .append("circle");
+        decorateNode(node);
+        labelNode(node);
+        return node;
     }
 
-    function labelNode() {
+    function decorateNode(node) {
+        node.selectAll("circle")
+            .attr("r", d => d.r)
+            .attr("fill", d => d.color);
+    }
+
+    function labelNode(node) {
         node.append("text")
             .attr("text-anchor", "middle")
             .attr("dx", 0)
@@ -118,7 +124,46 @@ var createGraph = function (simulationData) {
             });
     }
 
+    function updateNodesAndLinks(nodesToUpdate, linksToUpdate) {
+        decorateNode(node.filter(n => nodesToUpdate.indexOf(n.id) !== -1));
+        decorateLink(link.filter(l => linksToUpdate.indexOf(l.id) !== -1));
+        simulation.force("link").initialize(simulation.nodes());
+        simulation.force("collide").initialize(simulation.nodes());
+    }
+
+    function replaceNodesAndLinks() {
+        node = node.data(graphData.nodes, function (d) { return d.id; });
+        node.exit().remove();
+        node = visualizeNode(node.enter()).merge(node);
+
+        link = link.data(graphData.links, function (d) { return d.id; });
+        link.exit().remove();
+        link = visualizeLink(link.enter()).merge(link);
+
+        simulation.nodes(graphData.nodes);
+        simulation.force("link").links(graphData.links);
+    }
+
+    function update(simulationData) {
+        var updated = graphData.update(simulationData, chartWidth, chartHeight);
+        if (updated.nodesToUpdate.length + updated.linksToUpdate.length > 0) {
+            updateNodesAndLinks(updated.nodesToUpdate, updated.linksToUpdate);
+        }
+        if (updated.addedOrRemoved) {
+            replaceNodesAndLinks();
+            updateSimulation(true);
+        }
+        else
+            updateSimulation(false);
+    }
+
+    function updateSimulation(rearrange) {
+        simulation.alphaTarget(rearrange ? 0.2 : 0.1).restart();
+        setTimeout(function () { simulation.alphaTarget(0); }, rearrange ? 400 : 200);
+    }
+
     return {
-        draw: draw
+        draw: draw,
+        update: update
     };
 }

@@ -45,4 +45,6 @@ function calibratePeersSum(peers, sumTrust, expectedSum) {
     return peers.map(p => Object.assign({}, p, { trust: p.trust * expectedSum / sumTrust }));
 }
 
-module.exports = calibrate;
+if (typeof module !== 'undefined') {
+    module.exports = calibrate;
+}
