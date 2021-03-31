@@ -15,34 +15,22 @@ function calibrateIndividual(ind) {
 function calibratePeers(peers) {
     if (!peers.length)
         return peers;
-    const friends = peers.filter(p => p.trust > 0);
-    const foes = peers.filter(p => p.trust < 0);
-    const strangers = peers.filter(p => p.trust === 0);
-    var calibratedPeers = calibrateNonStrangers(friends, 1.0)
-        .concat(calibrateNonStrangers(foes, -1.0))
-        .concat(strangers)
-    calibratedPeers.sort((a, b) => a.index - b.index);
-    return calibratedPeers;
+    const sumOfAbsoluteTrust = sum(mapAbsoluteTrust(peers));
+    return sumOfAbsoluteTrust ? calibrateTrust(peers, sumOfAbsoluteTrust) : peers;
 }
 
-function calibrateNonStrangers(peers, expectedSum) {
-    if (!peers.length)
-        return peers;
-    return calibratePeersSum(peers, sum(mapTrust(peers)), expectedSum);
+function calibrateTrust(peers, sumOfAbsoluteTrust) {
+    return sumOfAbsoluteTrust === 1
+        ? peers
+        : peers.map(p => Object.assign({}, p, { trust: p.trust / sumOfAbsoluteTrust }));
 }
 
 function sum(arr) {
     return arr.reduce((a, b) => a + b, 0.0);
 }
 
-function mapTrust(peers) {
-    return peers.map(p => p.trust);
-}
-
-function calibratePeersSum(peers, sumTrust, expectedSum) {
-    if (sumTrust === expectedSum)
-        return peers;
-    return peers.map(p => Object.assign({}, p, { trust: p.trust * expectedSum / sumTrust }));
+function mapAbsoluteTrust(peers) {
+    return peers.map(p => Math.abs(p.trust));
 }
 
 if (typeof module !== 'undefined') {

@@ -119,19 +119,33 @@ test('given universe with three individuals who trust each other, each individua
     expect(noam.peers[1].trust).toBe(.5);
 });
 
-test('given individual who trust some and distrust some, calibrated individual has sum of positive trust = 1 and sum of negative trust = -1', () => {
+test('given individual who trust one and distrust one, sum of trust - distrust is 1', () => {
     const universe = [
         {
             index: 0,
             name: { first: 'Howard', last: 'Aiken' },
-            peers: [{ index: 1, trust: .1 }, { index: 2, trust: -.2 }, { index: 3, trust: .3 }, { index: 4, trust: -.4 }]
+            peers: [{ index: 1, trust: 1 }, { index: 2, trust: -1 }]
         }
     ];
     const res = calibrate(universe);
     expect(res.length).toBe(1);
     const howard = res[0];
-    expect(howard.peers[0].trust).toBeCloseTo(.25, 5);
-    expect(howard.peers[1].trust).toBeCloseTo(-1 / 3.0, 5);
-    expect(howard.peers[2].trust).toBeCloseTo(.75, 5);
-    expect(howard.peers[3].trust).toBeCloseTo(-2 / 3.0, 5);
+    expect(howard.peers[0].trust - howard.peers[1].trust).toBe(1);
+});
+
+test('given individual who trust some and distrust some, calibrated individual has sum of positive trust = 1 and sum of negative trust = -1', () => {
+    const universe = [
+        {
+            index: 0,
+            name: { first: 'Howard', last: 'Aiken' },
+            peers: [{ index: 1, trust: .2 }, { index: 2, trust: -.4 }, { index: 3, trust: .6 }, { index: 4, trust: -.8 }]
+        }
+    ];
+    const res = calibrate(universe);
+    expect(res.length).toBe(1);
+    const howard = res[0];
+    expect(howard.peers[0].trust).toBeCloseTo(.1, 5);
+    expect(howard.peers[1].trust).toBeCloseTo(-.2, 5);
+    expect(howard.peers[2].trust).toBeCloseTo(.3, 5);
+    expect(howard.peers[3].trust).toBeCloseTo(-.4, 5);
 });
