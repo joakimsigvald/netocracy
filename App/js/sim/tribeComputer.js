@@ -31,7 +31,7 @@ function computeTribes(universe, connections, orderedConnections) {
     }
 
     function tryMergeTribes(first, second) {
-        var allMembers = first.members.concat(second.members);
+        var allMembers = first.tribe.members.concat(second.tribe.members);
         if (!canFormOneTribe(allMembers))
             return;
         removeFrom(tribes, first.tribe);

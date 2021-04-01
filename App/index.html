@@ -4,11 +4,16 @@
     <button onclick="openFullscreen()">Fullscreen</button>
     <div id='vizWindow' style="background-color:aliceblue">
         <div id="controlPane" style="height: 80px; margin:10px">
-            <div><h1>Netocracy</h1></div>
-            <button onclick="startSimulation()">Start simulation!</button>
+            <div style="height: 50%">
+                <div><h1>Netocracy</h1></div>
+                <button id="startSimulationBtn" onclick="startSimulation()">Start simulation!</button>
+                <button id="updateSimulationBtn" onclick="updateSimulation()" style="display: none">Update simulation!</button>
+            </div>
+            <div id="statusPane" style="height: 50%; margin-left: 200px">
+            </div>
         </div>
         <div id="viz_panel">
-            <div id="viz_canvas" style="background-color: white">
+            <div id="viz_canvas">
             </div>
         </div>
     </div>

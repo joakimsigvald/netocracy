@@ -1,19 +1,20 @@
 "use strict";
 
-var createGraphData = function (simulationData, chartWidth, chartHeight) {
-    const coloring = createColoring();
-    var nodes = createNodes(simulationData.universe, simulationData.tribes, chartWidth, chartHeight);
+var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
+    const coloring = createColoring(dark);
+    var nodes = createNodes(simulationData, chartWidth, chartHeight);
     var links = createLinks(simulationData.connections);
 
     function createLinks(connections) {
         return connections.map(createLink);
     }
 
-    function createNodes(universe, tribes, chartWidth, chartHeight) {
+    function createNodes(simulationData, chartWidth, chartHeight) {
+        const tribeCount = simulationData.tribes.length;
         var panelSize = Math.min(chartWidth, chartHeight);
-        var nodeRadius = 0.2 * panelSize * Math.sqrt(1.0 / universe.length);
+        var nodeRadius = 0.2 * panelSize * Math.sqrt(1.0 / simulationData.universe.length);
         var nodeMargin = 1.1 * nodeRadius;
-        return universe.map(createNode);
+        return simulationData.universe.map(createNode);
 
         function createNode(ind) {
             return {
@@ -26,7 +27,7 @@ var createGraphData = function (simulationData, chartWidth, chartHeight) {
         }
 
         function getColor(ind) {
-            return coloring.getColorByIndex(ind.tribe ? ind.tribe.index : tribes.length, tribes.length + 1, 1);
+            return coloring.getColorByIndex(ind.tribe ? ind.tribe.index : tribeCount, tribeCount + 1, 1);
         }
     }
 
@@ -40,7 +41,7 @@ var createGraphData = function (simulationData, chartWidth, chartHeight) {
     };
 
     function update(simulationData, chartWidth, chartHeight) {
-        var newNodes = createNodes(simulationData.universe, chartWidth, chartHeight);
+        var newNodes = createNodes(simulationData, chartWidth, chartHeight);
         var newLinks = createLinks(simulationData.connections);
         var newNodeIds = newNodes.map(n => n.id);
         var newLinkIds = newLinks.map(l => l.id);

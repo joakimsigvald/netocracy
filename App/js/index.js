@@ -1,4 +1,12 @@
+var simulation = null;
+
 function startSimulation() {
-    var simulation = createSimulation();
+    simulation = createSimulation(true);
+    $('#startSimulationBtn').hide();
+    $('#updateSimulationBtn').show();
     simulation.start();
+}
+
+function updateSimulation() {
+    simulation.update();
 }

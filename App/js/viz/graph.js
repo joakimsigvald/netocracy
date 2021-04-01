@@ -1,15 +1,17 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createGraph = function (simulationData) {
+var createGraph = function (simulationData, dark) {
     var chartWidth, chartHeight;
+    $('#viz_canvas').css('background-color', dark ? 'black' : 'white');
+
     var svg = d3.select("#viz_canvas").append("svg");
     var chartLayer = svg.append("g").classed("chartLayer", true);
     var graphData, simulation, link, node;
 
     function draw() {
         setSize();
-        graphData = createGraphData(simulationData, chartWidth, chartHeight);
+        graphData = createGraphData(simulationData, chartWidth, chartHeight, dark);
         drawChart();
     }
 
@@ -92,9 +94,9 @@ var createGraph = function (simulationData) {
     }
 
     function decorateLink(link) {
-        link.attr("stroke", "black")
+        link.attr("stroke", dark ? "white" : 'black')
             .attr("stroke-width", function (l) {
-                return Math.max(1, l.strength);
+                return 4 * Math.max(1, l.strength);
             })
             .attr("style", function (l) { return "stroke-opacity: " + Math.min(1, l.strength); });
     }
@@ -119,6 +121,7 @@ var createGraph = function (simulationData) {
             .attr("dx", 0)
             .attr("dy", ".35em")
             .attr('pointer-events', 'none')
+            .style('fill', dark ? 'white' : 'black')
             .text(function (d) {
                 return d.label;
             });
