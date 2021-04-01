@@ -22,7 +22,7 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
                 r: nodeRadius,
                 bounds: nodeRadius + nodeMargin,
                 color: getColor(ind),
-                label: firstAndLast(ind.name)
+                label: ind.membershipNumber ? `${ind.membershipNumber}. ${firstAndLast(ind.name)}` : firstAndLast(ind.name)
             };
         }
 

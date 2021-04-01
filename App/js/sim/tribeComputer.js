@@ -17,7 +17,7 @@ function computeTribes(universe, connections, orderedConnections) {
         if (!canJoinTribe(aspiringMember, tribe))
             return;
         tribe.members.push(aspiringMember);
-        aspiringMember.tribe = tribe;
+        initiateMember(tribe, aspiringMember, tribe.members.length);
     }
 
     function canFormOneTribe(aspiringMembers) {
@@ -31,21 +31,43 @@ function computeTribes(universe, connections, orderedConnections) {
     }
 
     function tryMergeTribes(first, second) {
-        var allMembers = first.tribe.members.concat(second.tribe.members);
+        const dominantTribe = getDominantTribe(first.tribe, second.tribe);
+        const secondaryTribe = dominantTribe === first.tribe ? second.tribe : first.tribe;
+        var allMembers = dominantTribe.members.concat(secondaryTribe.members);
         if (!canFormOneTribe(allMembers))
             return;
         removeFrom(tribes, first.tribe);
         removeFrom(tribes, second.tribe);
-        createTribe([first, second], allMembers);
+        createTribe(allMembers);
     }
 
-    function createTribe(founders, members) {
+    function getDominantTribe(tribe1, tribe2) {
+        if (tribe1.members.length > tribe2.members.length)
+            return tribe1;
+        if (tribe2.members.length > tribe1.members.length)
+            return tribe2;
+        return (getFoundingBond(tribe1) > getFoundingBond(tribe2))
+            ? tribe1 : tribe2;
+    }
+
+    function getFoundingBond(tribe) {
+        const ind1 = tribe.members[0];
+        const ind2 = tribe.members[1];
+        return connections[ind1.index][ind2.index] || connections[ind2.index][ind1.index];
+    }
+
+    function createTribe(members) {
         const tribe = {
-            name: generateTribeName(tribes, founders[0], founders[1]),
+            name: generateTribeName(tribes, members[0], members[1]),
             members: members
         };
-        members.forEach(m => m.tribe = tribe);
+        members.forEach((m, i) => initiateMember(tribe, m, i + 1));
         tribes.push(tribe);
+    }
+
+    function initiateMember(tribe, member, n) {
+        member.tribe = tribe;
+        member.membershipNumber = n;
     }
 
     orderedConnections.forEach(c => {
@@ -53,7 +75,7 @@ function computeTribes(universe, connections, orderedConnections) {
         var second = universe[c.y];
         if (!first.tribe) {
             if (!second.tribe) {
-                createTribe([first, second], [first, second]);
+                createTribe([first, second]);
             }
             else {
                 tryJoinTribe(first, second.tribe);
