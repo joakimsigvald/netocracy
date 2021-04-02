@@ -46,7 +46,7 @@ function createTribeData(universeData, connectionData) {
         if (!canJoinTribe(aspiringMember, tribe))
             return;
         tribe.members.push(aspiringMember);
-        initiateMember(tribe, aspiringMember, tribe.members.length);
+        setMembership(aspiringMember, tribe, tribe.members.length);
     }
 
     function canFormOneTribe(aspiringMembers) {

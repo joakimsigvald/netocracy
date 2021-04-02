@@ -2,20 +2,20 @@
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
 var createGraph = function (simulationData, dark) {
-    var chartWidth, chartHeight;
     $('#viz_canvas').css('background-color', dark ? 'black' : 'white');
-
     var svg = d3.select("#viz_canvas").append("svg");
     var chartLayer = svg.append("g").classed("chartLayer", true);
+
     var graphData, simulation, link, node;
+    var chartWidth, chartHeight;
 
     function draw() {
-        setSize();
+        computeDimensions();
         graphData = createGraphData(simulationData, chartWidth, chartHeight, dark);
         drawChart(graphData.getNodes(), graphData.getLinks());
     }
 
-    function setSize() {
+    function computeDimensions() {
         var panel = document.querySelector("#viz_panel");
         var graph = document.querySelector("#viz_canvas");
         var upperMargin = document.querySelector("#controlPane").clientHeight;
@@ -41,9 +41,9 @@ var createGraph = function (simulationData, dark) {
         simulation = d3.forceSimulation()
             .force('charge', d3.forceManyBody())
             .force("link", d3.forceLink()
-                .id(function (d) { return d.id; })
-                .strength(function (d) { return Math.min(1, d.strength); }))
-            .force("collide", d3.forceCollide(function (d) { return d.bounds; }).iterations(16));
+                .id(d => d.id)
+                .strength(d => Math.min(1, d.strength)))
+            .force("collide", d3.forceCollide(d => d.bounds).iterations(16));
         setForceCenter();
         link = svg.append("g")
             .attr("class", "links")
@@ -60,15 +60,13 @@ var createGraph = function (simulationData, dark) {
 
         var ticked = function () {
             link
-                .attr("x1", function (d) { return d.source.x; })
-                .attr("y1", function (d) { return d.source.y; })
-                .attr("x2", function (d) { return d.target.x; })
-                .attr("y2", function (d) { return d.target.y; });
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
 
             node
-                .attr("transform", function (d) {
-                    return "translate(" + d.x + "," + d.y + ")";
-                });
+                .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
         };
 
         simulation
@@ -95,10 +93,8 @@ var createGraph = function (simulationData, dark) {
 
     function decorateLink(link) {
         link.attr("stroke", dark ? "white" : 'black')
-            .attr("stroke-width", function (l) {
-                return 4 * Math.max(1, l.strength);
-            })
-            .attr("style", function (l) { return "stroke-opacity: " + Math.min(1, l.strength); });
+            .attr("stroke-width", l => 4 * Math.max(1, l.strength))
+            .attr("style", l => "stroke-opacity: " + Math.min(1, l.strength));
     }
 
     function visualizeNode(node) {
@@ -122,15 +118,11 @@ var createGraph = function (simulationData, dark) {
             .attr("dy", ".35em")
             .attr('pointer-events', 'none')
             .style('fill', dark ? 'white' : 'black')
-            .text(function (d) {
-                return d.label;
-            });
+            .text(d => d.label);
     }
 
     function updateNodesAndLinks(nodesToUpdate, linksToUpdate) {
-        decorateNode(node.filter(n => {
-            return nodesToUpdate.indexOf(n.id) > -1;
-        }));
+        decorateNode(node.filter(n => nodesToUpdate.indexOf(n.id) > -1));
         decorateLink(link.filter(l => linksToUpdate.indexOf(l.id) > -1));
         simulation.force("link").initialize(simulation.nodes());
         simulation.force("collide").initialize(simulation.nodes());
@@ -164,7 +156,7 @@ var createGraph = function (simulationData, dark) {
 
     function updateSimulation(rearrange) {
         simulation.alphaTarget(rearrange ? 0.2 : 0.1).restart();
-        setTimeout(function () { simulation.alphaTarget(0); }, rearrange ? 400 : 200);
+        setTimeout(() => simulation.alphaTarget(0), rearrange ? 400 : 200);
     }
 
     return {
