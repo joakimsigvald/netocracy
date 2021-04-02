@@ -1,31 +1,36 @@
 "use strict";
 
-var createUniverseData = function (averageFriends) {
+var createUniverseData = function (util, averageFriends) {
     var universe = null;
 
     function init() {
         universe = [
             {
+                id: 0,
                 index: 0,
                 name: { first: 'Howard', last: 'Aiken' },
                 peers: [{ index: 1, trust: -1 }, { index: 2, trust: 1 }, { index: 4, trust: 1 }]
             },
             {
+                id: 1,
                 index: 1,
                 name: { first: 'Ada', last: 'Byron' },
                 peers: [{ index: 0, trust: 1 }, { index: 3, trust: 1 }, { index: 4, trust: 1 }]
             },
             {
+                id: 2,
                 index: 2,
                 name: { first: 'Noam', last: 'Chomsky' },
                 peers: [{ index: 0, trust: 1 }, { index: 1, trust: -1 }, { index: 3, trust: 1 }]
             },
             {
+                id: 3,
                 index: 3,
                 name: { first: 'Edsger', last: 'Dijkstra' },
                 peers: [{ index: 0, trust: 1 }, { index: 1, trust: 1 }, { index: 2, trust: 1 }]
             },
             {
+                id: 4,
                 index: 4,
                 name: { first: 'J. Presper', last: 'Eckert' },
                 peers: [{ index: 0, trust: 1 }, { index: 1, trust: 1 }, { index: 3, trust: 1 }]
@@ -41,6 +46,7 @@ var createUniverseData = function (averageFriends) {
 
     function createIndividual() {
         return {
+            id: util.max(universe, i => i.id) + 1,
             index: universe.length,
             name: { first: 'Auto', last: `Generated ${universe.length + 1}` },
             peers: generatePeers()
@@ -53,10 +59,36 @@ var createUniverseData = function (averageFriends) {
         return randomIndividuals.slice(0, averageFriends).map(t => { return { index: t.i, trust: Math.random() }; });
     }
 
+    function removeIndividual(removeId) {
+        const removeIndex = universe.find(i => i.id === removeId).index;
+        const lastIndex = universe.length - 1;
+        if (removeIndex < lastIndex) {
+            const lastIndividual = universe[lastIndex];
+            universe[removeIndex] = lastIndividual;
+            lastIndividual.index = removeIndex;
+        }
+        universe.splice(lastIndex, 1);
+        universe.forEach(i => removeAndReindex(i.peers, removeIndex, lastIndex));
+    }
+
+    function removeAndReindex(peers, removeIndex, moveIndex) {
+        var peerIndex = peers.findIndex(p => p.index === removeIndex);
+        if (peerIndex > -1) {
+            peers.splice(peerIndex, 1);
+        }
+        if (removeIndex === moveIndex)
+            return;
+        peerIndex = peers.findIndex(p => p.index === moveIndex);
+        if (peerIndex > -1) {
+            peers[peerIndex].index = removeIndex;
+        }
+    }
+
+    init();
     return {
-        init: init,
         getUniverse: () => universe,
-        addIndividual: addIndividual
+        addIndividual: addIndividual,
+        removeIndividual: removeIndividual
     };
 }
 

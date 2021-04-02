@@ -1,4 +1,5 @@
-let util = require('./util');
+let createUtil = require('./util');
+let util = createUtil();
 
 test('removing 2 from 1,2,3 leaves 1,3', () => {
     const arr = [1,2,3]

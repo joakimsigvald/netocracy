@@ -1,6 +1,6 @@
 "use strict";
 
-var createConnectionData = function (universeData, relationComputer, trustCalibrator) {
+var createConnectionData = function (util, universeData, relationComputer, trustCalibrator) {
     var grid = null;
 
     function computeGrid() {
@@ -12,7 +12,7 @@ var createConnectionData = function (universeData, relationComputer, trustCalibr
 
     function computeConnectionGrid(universe, relations) {
         const n = universe.length;
-        var connections = create2DArray(n);
+        var connections = util.create2DArray(n);
         if (n > 1) {
             for (var x = 1; x < n; x++)
                 for (var y = 0; y < x; y++)
@@ -37,8 +37,8 @@ var createConnectionData = function (universeData, relationComputer, trustCalibr
         return res;
     }
 
+    computeGrid();
     return {
-        init: computeGrid,
         update: computeGrid,
         getGrid: () => grid,
         getOrdered: () => orderByDecreasingStrength(grid)

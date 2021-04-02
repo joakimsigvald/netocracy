@@ -5,7 +5,7 @@ var createGraph = function (simulationData, dark) {
     $('#viz_canvas').css('background-color', dark ? 'black' : 'white');
     var svg = d3.select("#viz_canvas").append("svg");
     var chartLayer = svg.append("g").classed("chartLayer", true);
-
+    var selection = createSelection(dark);
     var graphData, simulation, link, node;
     var chartWidth, chartHeight;
 
@@ -102,6 +102,7 @@ var createGraph = function (simulationData, dark) {
         node.append("circle");
         decorateNode(node);
         labelNode(node);
+        selection.hookup(node);
         return node;
     }
 
@@ -143,15 +144,15 @@ var createGraph = function (simulationData, dark) {
 
     function update(simulationData) {
         var updated = graphData.update(simulationData, chartWidth, chartHeight);
-        if (updated.nodesToUpdate.length + updated.linksToUpdate.length) {
-            updateNodesAndLinks(updated.nodesToUpdate, updated.linksToUpdate);
-        }
         if (updated.addedOrRemoved) {
             replaceNodesAndLinks(graphData.getNodes(), graphData.getLinks());
+            updateNodesAndLinks(updated.nodesToUpdate, updated.linksToUpdate);
             updateSimulation(true);
         }
-        else
+        else if (updated.nodesToUpdate.length + updated.linksToUpdate.length) {
+            updateNodesAndLinks(updated.nodesToUpdate, updated.linksToUpdate);
             updateSimulation(false);
+        }
     }
 
     function updateSimulation(rearrange) {
@@ -161,6 +162,7 @@ var createGraph = function (simulationData, dark) {
 
     return {
         draw: draw,
-        update: update
+        update: update,
+        getSelectedIndividual: selection.getSelectedEntity
     };
 }

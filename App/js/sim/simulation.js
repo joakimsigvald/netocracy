@@ -26,14 +26,12 @@ var createSimulation = function (dark) {
     }
 
     function start() {
-        const universeData = createUniverseData(3);
-        universeData.init();
-        const relationComputer = createRelationComputer();
+        const util = createUtil();
+        const universeData = createUniverseData(util, 3);
+        const relationComputer = createRelationComputer(util);
         const trustCalibrator = createTrustCalibrator();
-        const connectionData = createConnectionData(universeData, relationComputer, trustCalibrator);
-        connectionData.init();
-        const tribeData = createTribeData(universeData, connectionData);
-        tribeData.init();
+        const connectionData = createConnectionData(util, universeData, relationComputer, trustCalibrator);
+        const tribeData = createTribeData(util, universeData, connectionData);
         simulationData = createSimulationData(universeData, connectionData, tribeData);
         showStatus(simulationData);
         graph = createGraph(simulationData, dark);
@@ -47,12 +45,25 @@ var createSimulation = function (dark) {
 
     function addIndividual() {
         simulationData.addIndividual();
+        update();
+    }
+
+    function deleteSelectedIndividual() {
+        var selected = graph.getSelectedIndividual();
+        if (selected) {
+            simulationData.removeIndividual(selected.id);
+            update();
+        }
+    }
+
+    function update() {
         graph.update(simulationData);
         showStatus(simulationData);
     }
 
     return {
         start: start,
-        addIndividual: addIndividual
+        addIndividual: addIndividual,
+        deleteSelectedIndividual: deleteSelectedIndividual
     };
 }

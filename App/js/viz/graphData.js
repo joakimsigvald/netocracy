@@ -3,21 +3,34 @@
 var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
     const coloring = createColoring(dark);
     var nodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
-    var links = createLinks(simulationData.getConnections());
+    var links = createLinks(simulationData.getUniverse(), simulationData.getConnections());
 
-    function createLinks(connections) {
+    function createLinks(universe, connections) {
         return connections.map(createLink);
+
+        function createLink(con) {
+            const source = universe.find(i => i.index == con.x).id;
+            const target = universe.find(i => i.index == con.y).id;
+            return {
+                id: `${source}-${target}`,
+                source: source,
+                target: target,
+                strength: con.strength
+            }
+        };
     }
 
     function createNodes(universe, tribeCount, chartWidth, chartHeight) {
         var panelSize = Math.min(chartWidth, chartHeight);
         var nodeRadius = 0.2 * panelSize * Math.sqrt(1.0 / universe.length);
         var nodeMargin = 1.1 * nodeRadius;
-        return universe.map(createNode);
+        const nodes = universe.map(createNode);
+        nodes.sort((a, b) => (a.id - b.id));
+        return nodes;
 
         function createNode(ind) {
             return {
-                id: ind.index,
+                id: ind.id,
                 r: nodeRadius,
                 bounds: nodeRadius + nodeMargin,
                 color: getColor(ind),
@@ -30,18 +43,9 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
         }
     }
 
-    function createLink(con) {
-        return {
-            id: con.x + "-" + con.y,
-            source: con.x,
-            target: con.y,
-            strength: con.strength
-        }
-    };
-
     function update(simulationData, chartWidth, chartHeight) {
         var newNodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
-        var newLinks = createLinks(simulationData.getConnections());
+        var newLinks = createLinks(simulationData.getUniverse(), simulationData.getConnections());
         var newNodeIds = newNodes.map(n => n.id);
         var newLinkIds = newLinks.map(l => l.id);
         var oldNodeIds = nodes.map(n => n.id);

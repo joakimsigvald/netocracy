@@ -5,9 +5,16 @@ function startSimulation() {
     $('#startSimulationBtn').hide();
     $('#addIndividualBtn').show();
     simulation.start();
-    $(document).keypress(function (e) {
-        if (e.which === 13) {
-            addIndividual();
+    $(document).keydown(function (e) {
+        switch (e.which) {
+            case 13:
+                addIndividual();
+                break;
+            case 46:
+                simulation.deleteSelectedIndividual();
+                break;
+            default:
+                // No operation
         }
     });
 }

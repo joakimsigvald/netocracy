@@ -5,6 +5,14 @@ var createSimulationData = function (universeData, connectionData, tribeData) {
 
     function addIndividual() {
         universeData.addIndividual();
+        update()    }
+
+    function removeIndividual(id) {
+        universeData.removeIndividual(id);
+        update();
+    }
+
+    function update() {
         connectionData.update();
         tribeData.update();
     }
@@ -13,7 +21,8 @@ var createSimulationData = function (universeData, connectionData, tribeData) {
         getUniverse: universeData.getUniverse,
         getConnections: connectionData.getOrdered,
         getTribes: tribeData.getTribes,
-        addIndividual: addIndividual
+        addIndividual: addIndividual,
+        removeIndividual: removeIndividual
     };
 }
 

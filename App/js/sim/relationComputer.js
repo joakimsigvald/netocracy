@@ -1,6 +1,6 @@
 "use strict";
 
-var createRelationComputer = function () {
+var createRelationComputer = function (util) {
     return {
         computeRelations: computeRelations
     }
@@ -8,7 +8,7 @@ var createRelationComputer = function () {
     function computeRelations(universe) {
         const threshold = 0.001;
         const n = universe.length;
-        var relations = create2DArray(n);
+        var relations = util.create2DArray(n);
         universe.forEach(source => updatePeerRelations(1.0, source, [source.index]));
         truncateLower(relations, n, 0);
         return relations;

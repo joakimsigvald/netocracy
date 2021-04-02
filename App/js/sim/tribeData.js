@@ -1,6 +1,6 @@
 "use strict";
 
-function createTribeData(universeData, connectionData) {
+function createTribeData(util, universeData, connectionData) {
     var tribes = null;
     var connections = null;
 
@@ -65,8 +65,8 @@ function createTribeData(universeData, connectionData) {
         var allMembers = dominantTribe.members.concat(secondaryTribe.members);
         if (!canFormOneTribe(allMembers))
             return;
-        removeFrom(tribes, first.tribe);
-        removeFrom(tribes, second.tribe);
+        util.removeFrom(tribes, first.tribe);
+        util.removeFrom(tribes, second.tribe);
         createTribe(allMembers);
     }
 
@@ -99,8 +99,8 @@ function createTribeData(universeData, connectionData) {
         member.membershipNumber = n;
     }
 
+    createTribes();
     return {
-        init: createTribes,
         update: createTribes,
         getTribes: () => tribes
     };

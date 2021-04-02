@@ -39,6 +39,7 @@
     <Content Include="js\sim\trustCalibrator.js" />
     <Content Include="js\fun\fullscreen.js" />
     <Content Include="js\index.js" />
+    <Content Include="js\viz\selection.js" />
     <Content Include="js\viz\graphData.js" />
     <Content Include="js\sim\tribeData.js" />
     <Content Include="js\sim\connectionData.js" />

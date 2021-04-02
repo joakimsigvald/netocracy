@@ -4,14 +4,12 @@ let createUniverseData = require('./universeData');
 
 test('when create universe, universe has five individuals', () => {
     const universeData = createUniverseData();
-    universeData.init();
     const universe = universeData.getUniverse();
     expect(universe.length).toBe(5);
 });
 
 test('when create universe and addIndividual, universe has five individuals with randomly selected friends', () => {
     const universeData = createUniverseData(3);
-    universeData.init();
 
     universeData.addIndividual();
 
