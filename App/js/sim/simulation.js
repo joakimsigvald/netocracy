@@ -18,7 +18,7 @@ var createSimulation = function (dark) {
     function generateSummary(simulationData) {
         const universe = simulationData.getUniverse();
         const tribeNames = joinStrings(simulationData.getTribes().map(t => t.name));
-        const memberNames = joinStrings(universe.map(t => firstAndLast(t.name)));
+        const memberNames = joinStrings(universe.slice(0, 10).map(t => firstAndLast(t.name))) + (universe.length > 10 ? '...' : '');
         const tribeless = universe.filter(i => !i.tribe);
         const tribelessNames = tribeless.length ? joinStrings(tribeless.map(t => firstAndLast(t.name))) : 'None';
         const waswere = tribeless.length === 1 ? 'was' : 'were';
@@ -48,6 +48,7 @@ var createSimulation = function (dark) {
     function addIndividual() {
         simulationData.addIndividual();
         graph.update(simulationData);
+        showStatus(simulationData);
     }
 
     return {

@@ -8,6 +8,7 @@ function createTribeData(universeData, connectionData) {
         tribes = [];
         connections = connectionData.getGrid();
         const universe = universeData.getUniverse();
+        universe.forEach(ind => setMembership(ind, null, null));
         connectionData.getOrdered().forEach(c => {
             var first = universe[c.x];
             var second = universe[c.y];
@@ -89,11 +90,11 @@ function createTribeData(universeData, connectionData) {
             name: generateTribeName(tribes, members[0], members[1]),
             members: members
         };
-        members.forEach((m, i) => initiateMember(tribe, m, i + 1));
+        members.forEach((m, i) => setMembership(m, tribe, i + 1));
         tribes.push(tribe);
     }
 
-    function initiateMember(tribe, member, n) {
+    function setMembership(member, tribe, n) {
         member.tribe = tribe;
         member.membershipNumber = n;
     }
