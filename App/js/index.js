@@ -3,10 +3,15 @@ var simulation = null;
 function startSimulation() {
     simulation = createSimulation(true);
     $('#startSimulationBtn').hide();
-    $('#updateSimulationBtn').show();
+    $('#addIndividualBtn').show();
     simulation.start();
+    $(document).keypress(function (e) {
+        if (e.which === 13) {
+            addIndividual();
+        }
+    });
 }
 
-function updateSimulation() {
-    simulation.update();
+function addIndividual() {
+    simulation.addIndividual();
 }

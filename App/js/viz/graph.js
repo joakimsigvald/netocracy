@@ -12,7 +12,7 @@ var createGraph = function (simulationData, dark) {
     function draw() {
         setSize();
         graphData = createGraphData(simulationData, chartWidth, chartHeight, dark);
-        drawChart();
+        drawChart(graphData.getNodes(), graphData.getLinks());
     }
 
     function setSize() {
@@ -37,7 +37,7 @@ var createGraph = function (simulationData, dark) {
         }
     }
 
-    function drawChart() {
+    function drawChart(nodes, links) {
         simulation = d3.forceSimulation()
             .force('charge', d3.forceManyBody())
             .force("link", d3.forceLink()
@@ -48,14 +48,14 @@ var createGraph = function (simulationData, dark) {
         link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
-            .data(graphData.links)
+            .data(links)
             .enter();
         link = visualizeLink(link);
 
         node = svg.append("g")
             .attr("class", "nodes")
             .selectAll("circle")
-            .data(graphData.nodes)
+            .data(nodes)
             .enter().append("g");
 
         var ticked = function () {
@@ -72,13 +72,13 @@ var createGraph = function (simulationData, dark) {
         };
 
         simulation
-            .nodes(graphData.nodes)
+            .nodes(nodes)
             .on("tick", ticked);
 
         simulation.force("link")
-            .links(graphData.links);
+            .links(links);
 
-        node = visualizeNode(node);
+        visualizeNode(node);
     }
 
     function setForceCenter() {
@@ -102,8 +102,8 @@ var createGraph = function (simulationData, dark) {
     }
 
     function visualizeNode(node) {
-        node.append("g")
-            .append("circle");
+        node = node.append("g");
+        node.append("circle");
         decorateNode(node);
         labelNode(node);
         return node;
@@ -128,32 +128,34 @@ var createGraph = function (simulationData, dark) {
     }
 
     function updateNodesAndLinks(nodesToUpdate, linksToUpdate) {
-        decorateNode(node.filter(n => nodesToUpdate.indexOf(n.id) !== -1));
-        decorateLink(link.filter(l => linksToUpdate.indexOf(l.id) !== -1));
+        decorateNode(node.filter(n => {
+            return nodesToUpdate.indexOf(n.id) > -1;
+        }));
+        decorateLink(link.filter(l => linksToUpdate.indexOf(l.id) > -1));
         simulation.force("link").initialize(simulation.nodes());
         simulation.force("collide").initialize(simulation.nodes());
     }
 
-    function replaceNodesAndLinks() {
-        node = node.data(graphData.nodes, function (d) { return d.id; });
+    function replaceNodesAndLinks(nodes, links) {
+        node = node.data(nodes, function (d) { return d.id; });
         node.exit().remove();
         node = visualizeNode(node.enter()).merge(node);
 
-        link = link.data(graphData.links, function (d) { return d.id; });
+        link = link.data(links, function (d) { return d.id; });
         link.exit().remove();
         link = visualizeLink(link.enter()).merge(link);
 
-        simulation.nodes(graphData.nodes);
-        simulation.force("link").links(graphData.links);
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
     }
 
     function update(simulationData) {
         var updated = graphData.update(simulationData, chartWidth, chartHeight);
-        if (updated.nodesToUpdate.length + updated.linksToUpdate.length > 0) {
+        if (updated.nodesToUpdate.length + updated.linksToUpdate.length) {
             updateNodesAndLinks(updated.nodesToUpdate, updated.linksToUpdate);
         }
         if (updated.addedOrRemoved) {
-            replaceNodesAndLinks();
+            replaceNodesAndLinks(graphData.getNodes(), graphData.getLinks());
             updateSimulation(true);
         }
         else

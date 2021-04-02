@@ -1,10 +1,11 @@
 "use strict";
 
-let calibrate = require('./trustCalibrator');
+let createTrustCalibrator = require('./trustCalibrator');
+let calibrate = universe => createTrustCalibrator().calibrate(universe);
 
 test('given empty universe, return copy of universe', () => {
     const universe = [];
-    expect(calibrate(universe)).toStrictEqual(universe);
+    expect(createTrustCalibrator().calibrate(universe)).toStrictEqual(universe);
 });
 
 test('given universe with one individual without trust, return deep copy of universe', () => {

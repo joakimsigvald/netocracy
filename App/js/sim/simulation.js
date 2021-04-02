@@ -3,6 +3,7 @@
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
 var createSimulation = function (dark) {
     var graph = null;
+    var simulationData = null;
 
     function joinStrings(strArr) {
         switch (strArr.length) {
@@ -15,25 +16,28 @@ var createSimulation = function (dark) {
     }
 
     function generateSummary(simulationData) {
-        const tribeNames = joinStrings(simulationData.tribes.map(t => t.name));
-        const memberNames = joinStrings(simulationData.universe.map(t => firstAndLast(t.name)));
-        const tribeless = simulationData.universe.filter(i => !i.tribe);
+        const universe = simulationData.getUniverse();
+        const tribeNames = joinStrings(simulationData.getTribes().map(t => t.name));
+        const memberNames = joinStrings(universe.map(t => firstAndLast(t.name)));
+        const tribeless = universe.filter(i => !i.tribe);
         const tribelessNames = tribeless.length ? joinStrings(tribeless.map(t => firstAndLast(t.name))) : 'None';
         const waswere = tribeless.length === 1 ? 'was' : 'were';
         return `Generated tribes ${tribeNames} from ${memberNames}. ${tribelessNames} ${waswere} left without a tribe.`;
     }
 
     function start() {
-        const simulationData = createSimulationData();
+        const universeData = createUniverseData(3);
+        universeData.init();
+        const relationComputer = createRelationComputer();
+        const trustCalibrator = createTrustCalibrator();
+        const connectionData = createConnectionData(universeData, relationComputer, trustCalibrator);
+        connectionData.init();
+        const tribeData = createTribeData(universeData, connectionData);
+        tribeData.init();
+        simulationData = createSimulationData(universeData, connectionData, tribeData);
         showStatus(simulationData);
         graph = createGraph(simulationData, dark);
         graph.draw();
-    }
-
-    function update() {
-        const simulationData = createSimulationData();
-        showStatus(simulationData);
-        graph.update(simulationData);
     }
 
     function showStatus(simulationData) {
@@ -41,8 +45,13 @@ var createSimulation = function (dark) {
         $('#statusPane').html(summary);
     }
 
+    function addIndividual() {
+        simulationData.addIndividual();
+        graph.update(simulationData);
+    }
+
     return {
         start: start,
-        update: update
+        addIndividual: addIndividual
     };
 }

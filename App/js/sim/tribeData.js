@@ -1,7 +1,35 @@
 "use strict";
 
-function computeTribes(universe, connections, orderedConnections) {
-    var tribes = [];
+function createTribeData(universeData, connectionData) {
+    var tribes = null;
+    var connections = null;
+
+    function createTribes() {
+        tribes = [];
+        connections = connectionData.getGrid();
+        const universe = universeData.getUniverse();
+        connectionData.getOrdered().forEach(c => {
+            var first = universe[c.x];
+            var second = universe[c.y];
+            if (!first.tribe) {
+                if (!second.tribe) {
+                    createTribe([first, second]);
+                }
+                else {
+                    tryJoinTribe(first, second.tribe);
+                }
+            }
+            else {
+                if (!second.tribe) {
+                    tryJoinTribe(second, first.tribe);
+                }
+                else if (first.tribe !== second.tribe) {
+                    tryMergeTribes(first, second);
+                }
+            }
+        });
+        tribes.forEach((t, i) => t.index = i);
+    }
 
     function areConnected(first, second) {
         return first.index < second.index
@@ -70,26 +98,9 @@ function computeTribes(universe, connections, orderedConnections) {
         member.membershipNumber = n;
     }
 
-    orderedConnections.forEach(c => {
-        var first = universe[c.x];
-        var second = universe[c.y];
-        if (!first.tribe) {
-            if (!second.tribe) {
-                createTribe([first, second]);
-            }
-            else {
-                tryJoinTribe(first, second.tribe);
-            }
-        }
-        else {
-            if (!second.tribe) {
-                tryJoinTribe(second, first.tribe);
-            }
-            else if (first.tribe !== second.tribe) {
-                tryMergeTribes(first, second);
-            }
-        }
-    });
-    tribes.forEach((t, i) => t.index = i);
-    return tribes;
+    return {
+        init: createTribes,
+        update: createTribes,
+        getTribes: () => tribes
+    };
 }

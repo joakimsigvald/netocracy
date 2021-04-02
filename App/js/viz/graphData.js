@@ -2,19 +2,18 @@
 
 var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
     const coloring = createColoring(dark);
-    var nodes = createNodes(simulationData, chartWidth, chartHeight);
-    var links = createLinks(simulationData.connections);
+    var nodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
+    var links = createLinks(simulationData.getConnections());
 
     function createLinks(connections) {
         return connections.map(createLink);
     }
 
-    function createNodes(simulationData, chartWidth, chartHeight) {
-        const tribeCount = simulationData.tribes.length;
+    function createNodes(universe, tribeCount, chartWidth, chartHeight) {
         var panelSize = Math.min(chartWidth, chartHeight);
-        var nodeRadius = 0.2 * panelSize * Math.sqrt(1.0 / simulationData.universe.length);
+        var nodeRadius = 0.2 * panelSize * Math.sqrt(1.0 / universe.length);
         var nodeMargin = 1.1 * nodeRadius;
-        return simulationData.universe.map(createNode);
+        return universe.map(createNode);
 
         function createNode(ind) {
             return {
@@ -41,8 +40,8 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
     };
 
     function update(simulationData, chartWidth, chartHeight) {
-        var newNodes = createNodes(simulationData, chartWidth, chartHeight);
-        var newLinks = createLinks(simulationData.connections);
+        var newNodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
+        var newLinks = createLinks(simulationData.getConnections());
         var newNodeIds = newNodes.map(n => n.id);
         var newLinkIds = newLinks.map(l => l.id);
         var oldNodeIds = nodes.map(n => n.id);
@@ -50,18 +49,15 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
 
         var nodesToAdd = newNodes.filter(n => oldNodeIds.indexOf(n.id) === -1);
         var nodesToRemove = nodes.filter(n => newNodeIds.indexOf(n.id) === -1).map(l => oldNodeIds.indexOf(l.id));
-        //update visualization attributes if needed
         var nodesToUpdate = newNodes
-            .filter(n => {
-                var index = oldNodeIds.indexOf(n.id);
-                return index !== -1 && !nodesEqual(n, nodes[index]);
-            }).map(n => {
-                var oldNode = nodes[oldNodeIds.indexOf(n.id)];
-                oldNode.r = n.r;
-                oldNode.bounds = n.bounds;
-                oldNode.color = n.color;
-                oldNode.label = n.label;
-                return oldNode;
+            .filter(nn => oldNodeIds.indexOf(nn.id) > -1)
+            .map(nn => {
+                var oldNode = nodes[oldNodeIds.indexOf(nn.id)];
+                oldNode.r = nn.r;
+                oldNode.bounds = nn.bounds;
+                oldNode.color = nn.color;
+                oldNode.label = nn.label;
+                return nn.id;
             });
 
         var linksToAdd = newLinks.filter(l => oldLinkIds.indexOf(l.id) === -1);
@@ -74,14 +70,10 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
             oldLink.strength = l.strength;
             return oldLink;
         });
-        nodesToRemove.reverse().forEach(i => data.nodes.splice(i, 1));
-        linksToRemove.reverse().forEach(i => data.links.splice(i, 1));
+        nodesToRemove.reverse().forEach(i => nodes.splice(i, 1));
+        linksToRemove.reverse().forEach(i => links.splice(i, 1));
         nodesToAdd.forEach(n => nodes.push(n));
         linksToAdd.forEach(l => links.push(l));
-
-        function nodesEqual(n1, n2) {
-            return n1.r === n2.r && n1.color === n2.color && n1.label === n2.label;
-        }
 
         function linksEqual(l1, l2) {
             return l1.strength === l2.strength;
@@ -95,8 +87,8 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
     }
 
     return {
-        nodes: nodes,
-        links: links,
+        getNodes: () => nodes,
+        getLinks: () => links,
         update: update
     };
 }
