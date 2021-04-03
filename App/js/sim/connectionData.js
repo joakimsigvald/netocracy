@@ -13,28 +13,30 @@ var createConnectionData = function (util, universeData, relationComputer, trust
     function computeConnectionGrid(universe, relations) {
         const n = universe.length;
         var connections = util.create2DArray(n);
-        if (n > 1) {
-            for (var x = 1; x < n; x++)
-                for (var y = 0; y < x; y++)
-                    connections[x][y] = relations[x][y] * relations[y][x]
-        }
+        traverse(n, (x, y) => {
+            connections[x][y] = Math.sqrt(relations[x][y] * relations[y][x]);
+        });
         return connections;
     }
 
     function orderByDecreasingStrength(connections) {
         const res = [];
         const n = connections.length;
-        if (n > 1) {
-            for (var x = 1; x < n; x++)
-                for (var y = 0; y < x; y++) {
-                    var strength = connections[x][y];
-                    if (strength) {
-                        res.push({ x, y, strength });
-                    }
-                }
-        }
+        traverse(n, (x, y) => {
+            var strength = connections[x][y];
+            if (strength) {
+                res.push({ x, y, strength });
+            }
+        });
         res.sort((a, b) => b.strength - a.strength);
         return res;
+    }
+
+    function traverse(n, action) {
+        if (n < 2) return;
+        for (var x = 1; x < n; x++)
+            for (var y = 0; y < x; y++)
+                action(x, y);
     }
 
     computeGrid();
