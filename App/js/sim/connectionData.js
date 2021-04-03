@@ -1,12 +1,11 @@
 "use strict";
 
-var createConnectionData = function (util, universeData, relationComputer, trustCalibrator) {
+var createConnectionData = function (util, universeData, relationComputer) {
     var grid = null;
 
     function computeGrid() {
         const universe = universeData.getUniverse();
-        const calibratedUniverse = trustCalibrator.calibrate(universe);
-        const relations = relationComputer.computeRelations(calibratedUniverse);
+        const relations = relationComputer.computeRelations(universe);
         grid = computeConnectionGrid(universe, relations);
     }
 

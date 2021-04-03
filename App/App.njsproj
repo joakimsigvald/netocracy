@@ -36,6 +36,7 @@
     <Content Include="js\sim\trustCalibrator.test.js" />
     <Content Include="js\viz\coloring.js" />
     <Content Include="js\sim\relationComputer.js" />
+    <Content Include="js\sim\relationComputer.test.js" />
     <Content Include="js\sim\trustCalibrator.js" />
     <Content Include="js\fun\fullscreen.js" />
     <Content Include="js\index.js" />

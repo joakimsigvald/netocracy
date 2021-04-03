@@ -28,9 +28,9 @@ var createSimulation = function (dark) {
     function start() {
         const util = createUtil();
         const universeData = createUniverseData(util, 3);
-        const relationComputer = createRelationComputer(util);
         const trustCalibrator = createTrustCalibrator();
-        const connectionData = createConnectionData(util, universeData, relationComputer, trustCalibrator);
+        const relationComputer = createRelationComputer(util, trustCalibrator);
+        const connectionData = createConnectionData(util, universeData, relationComputer);
         const tribeData = createTribeData(util, universeData, connectionData);
         simulationData = createSimulationData(universeData, connectionData, tribeData);
         showStatus(simulationData);
