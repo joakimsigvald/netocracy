@@ -86,19 +86,14 @@ function testFourIndividuals() {
 
 function testMixedTrustWherePositiveIsStronger() {
     const universe = createUniverse([
-        [{ i: 1, t: -.1 }, { i: 2, t: 1 }, { i: 3, t: 1 }],
-        [{ i: 0, t: 1 }, { i: 2, t: 1 }, { i: 3, t: 1 }],
-        [{ i: 0, t: 1 }, { i: 1, t: 1 }, { i: 3, t: 1 }],
-        [{ i: 0, t: 1 }, { i: 1, t: 1 }, { i: 2, t: 1 }]
+        [{ i: 1, t: -.1 }, { i: 2, t: .9 }],
+        [{ i: 0, t: .5 }, { i: 2, t: .5 }],
+        [{ i: 0, t: .5 }, { i: 1, t: .5 }],
     ])
 
     const relations = relationComputer.computeRelations(universe);
 
-    const calibratedTrust = 1 / 2.1;
-    const expectedStrength =
-        0.5 * 2 * calibratedTrust * (calibratedTrust
-            + 0.5 * calibratedTrust * calibratedTrust)
-        - .1 * calibratedTrust;
+    const expectedStrength = -.1 + .5 * .9 * .5;
 
     expect(expectedStrength).toBeGreaterThan(0);
     expect(relations[0][1]).toBeCloseTo(expectedStrength, 5);
