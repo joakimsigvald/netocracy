@@ -14,10 +14,18 @@ function createUtil() {
         return Math.max(...arr.map(getVal));
     }
 
+    function stocasticShift(n, number) {
+        const nBits = Math.ceil(Math.log2(n));
+        const bound = Math.pow(2, nBits);
+        const shifted = (bound - n - 1 + number) << 1;
+        return shifted < bound ? shifted : (shifted + 1) % bound;
+    }
+
     return {
         removeFrom: removeFrom,
         create2DArray: create2DArray,
-        max: max
+        max: max,
+        stocasticShift: stocasticShift
     }
 }
 

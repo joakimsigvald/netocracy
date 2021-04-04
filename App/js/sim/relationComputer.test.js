@@ -55,7 +55,11 @@ if (typeof test !== 'undefined') {
             [expectedStrength, expectedStrength, 0]]);
     });
 
-    test('given four individuals with mutual trust 1, relation strengths are damped additive strengts from peers', testFourIndividuals);
+    test('given four individuals with mutual trust 1, relation strengths are damped additive strengts from peers',
+        testFourIndividuals);
+
+    test('given one negative trust but positive relations to same peer are stronger, relation is positive',
+        testMixedTrustWherePositiveIsStronger);
 }
 
 function testFourIndividuals() {
@@ -78,6 +82,26 @@ function testFourIndividuals() {
             [expectedStrength, expectedStrength, 0, expectedStrength],
             [expectedStrength, expectedStrength, expectedStrength, 0],
         ]);
+};
+
+function testMixedTrustWherePositiveIsStronger() {
+    const universe = createUniverse([
+        [{ i: 1, t: -.1 }, { i: 2, t: 1 }, { i: 3, t: 1 }],
+        [{ i: 0, t: 1 }, { i: 2, t: 1 }, { i: 3, t: 1 }],
+        [{ i: 0, t: 1 }, { i: 1, t: 1 }, { i: 3, t: 1 }],
+        [{ i: 0, t: 1 }, { i: 1, t: 1 }, { i: 2, t: 1 }]
+    ])
+
+    const relations = relationComputer.computeRelations(universe);
+
+    const calibratedTrust = 1 / 2.1;
+    const expectedStrength =
+        0.5 * 2 * calibratedTrust * (calibratedTrust
+            + 0.5 * calibratedTrust * calibratedTrust)
+        - .1 * calibratedTrust;
+
+    expect(expectedStrength).toBeGreaterThan(0);
+    expect(relations[0][1]).toBeCloseTo(expectedStrength, 5);
 };
 
 function createUniverse(allTrusts) {
@@ -105,7 +129,8 @@ function expectStrengths(relations, expectedStrengths) {
 
 function getTestSuite() {
     return {
-        testFourIndividuals: testFourIndividuals
+        testFourIndividuals: testFourIndividuals,
+        testMixedTrustWherePositiveIsStronger: testMixedTrustWherePositiveIsStronger
     }
 }
 

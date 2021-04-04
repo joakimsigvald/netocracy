@@ -54,9 +54,13 @@ var createUniverseData = function (util, averageFriends) {
     }
 
     function generatePeers() {
-        const randomIndividuals = universe.map(i => { return { o: Math.random(), i: i.index }; });
-        randomIndividuals.sort((a, b) => a.o - b.o);
-        return randomIndividuals.slice(0, averageFriends).map(t => { return { index: t.i, trust: Math.random() }; });
+        const n = universe.length;
+        const stocasticIndividuals = universe.map(i =>
+        {
+            return { o: util.stocasticShift(n, i.index), i: i.index };
+        });
+        stocasticIndividuals.sort((a, b) => a.o - b.o);
+        return stocasticIndividuals.slice(0, averageFriends).map(t => { return { index: t.i, trust: Math.random() }; });
     }
 
     function removeIndividual(removeId) {

@@ -30,5 +30,5 @@ function createContent(res, contentType, fileName) {
 
 function debugTest() {
     const testSuite = getTestSuite();
-    testSuite.testFourIndividuals();
+    testSuite.testMixedTrustWherePositiveIsStronger();
 }
