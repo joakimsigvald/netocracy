@@ -1,10 +1,10 @@
 "use strict";
 
-var createUniverseData = function (util, averageFriends) {
+var createUniverseData = function (util, averageFriends, initialUniverse) {
     var universe = null;
 
     function init() {
-        universe = [
+        universe = initialUniverse || [
             {
                 id: 0,
                 index: 0,
@@ -38,18 +38,22 @@ var createUniverseData = function (util, averageFriends) {
         ];
     }
 
-    function addIndividual() {
-        const node = createIndividual();
-        universe.push(node);
-        node.peers.forEach(p => universe[p.index].peers.push({ index: node.index, trust: Math.random() }))
+    function addIndividual(individual) {
+        universe.push(individual || autoGenerateIndividual());
     }
 
-    function createIndividual() {
+    function autoGenerateIndividual() {
+        const individual = createIndividual();
+        individual.peers.forEach(p => universe[p.index].peers.push({ index: individual.index, trust: Math.random() }))
+        return individual;
+    }
+
+    function createIndividual(peers) {
         return {
             id: util.max(universe, i => i.id) + 1,
             index: universe.length,
             name: { first: 'Auto', last: `Generated ${universe.length + 1}` },
-            peers: generatePeers()
+            peers: peers || generatePeers()
         };
     }
 
@@ -92,7 +96,8 @@ var createUniverseData = function (util, averageFriends) {
     return {
         getUniverse: () => universe,
         addIndividual: addIndividual,
-        removeIndividual: removeIndividual
+        removeIndividual: removeIndividual,
+        createIndividual: createIndividual
     };
 }
 
