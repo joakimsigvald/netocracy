@@ -1,6 +1,6 @@
 "use strict";
 
-function createTribeData(util, universeData, connectionData) {
+function createTribeData(util, naming, universeData, connectionData) {
     var tribes = null;
     var connections = null;
 
@@ -49,16 +49,6 @@ function createTribeData(util, universeData, connectionData) {
         setMembership(aspiringMember, tribe, tribe.members.length);
     }
 
-    function canFormOneTribe(aspiringMembers) {
-        var indices = aspiringMembers.map(m => m.index);
-        indices.sort();
-        for (var i = 1; i < indices.lengt; i++)
-            for (var k = 0; k < i; k++)
-                if (connections[indices[i]][indices[k]] === 0)
-                    return false;
-        return true;
-    }
-
     function tryMergeTribes(first, second) {
         const dominantTribe = getDominantTribe(first.tribe, second.tribe);
         const secondaryTribe = dominantTribe === first.tribe ? second.tribe : first.tribe;
@@ -68,6 +58,18 @@ function createTribeData(util, universeData, connectionData) {
         util.removeFrom(tribes, first.tribe);
         util.removeFrom(tribes, second.tribe);
         createTribe(allMembers);
+    }
+
+    function canFormOneTribe(aspiringMembers) {
+        var indices = aspiringMembers.map(m => m.index);
+        indices.sort((a, b) => a - b);
+        const n = indices.length;
+        for (var x = 1; x < n; x++)
+            for (var y = 0; y < x; y++) {
+                if (!connections[indices[x]][indices[y]])
+                    return false;
+            }
+        return true;
     }
 
     function getDominantTribe(tribe1, tribe2) {
@@ -87,7 +89,7 @@ function createTribeData(util, universeData, connectionData) {
 
     function createTribe(members) {
         const tribe = {
-            name: generateTribeName(tribes, members[0], members[1]),
+            name: naming.generateTribeName(tribes, members[0], members[1]),
             members: members
         };
         members.forEach((m, i) => setMembership(m, tribe, i + 1));
@@ -104,4 +106,8 @@ function createTribeData(util, universeData, connectionData) {
         update: createTribes,
         getTribes: () => tribes
     };
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = createTribeData;
 }

@@ -1,7 +1,18 @@
 var simulation = null;
 
 function startSimulation() {
-    simulation = createSimulation(true);
+
+    const util = createUtil();
+    const naming = createNaming();
+    const universeData = createUniverseData(util, 3);
+    const trustCalibrator = createTrustCalibrator();
+    const relationComputer = createRelationComputer(util, trustCalibrator);
+    const connectionData = createConnectionData(util, universeData, relationComputer);
+    const tribeData = createTribeData(util, naming, universeData, connectionData);
+    simulationData = createSimulationData(universeData, connectionData, tribeData);
+
+
+    simulation = createSimulation(naming, simulationData, true);
     $('#startSimulationBtn').hide();
     $('#addIndividualBtn').show();
     simulation.start();

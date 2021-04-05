@@ -1,7 +1,7 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createSimulation = function (dark) {
+var createSimulation = function (naming, simulationData, dark) {
     var graph = null;
     var simulationData = null;
 
@@ -18,21 +18,18 @@ var createSimulation = function (dark) {
     function generateSummary(simulationData) {
         const universe = simulationData.getUniverse();
         const tribeNames = joinStrings(simulationData.getTribes().map(t => t.name));
-        const memberNames = joinStrings(universe.slice(0, 10).map(t => firstAndLast(t.name))) + (universe.length > 10 ? '...' : '');
+        const memberNames = joinStrings(universe.slice(0, 10)
+            .map(t => naming.firstAndLast(t.name)))
+            + (universe.length > 10 ? '...' : '');
         const tribeless = universe.filter(i => !i.tribe);
-        const tribelessNames = tribeless.length ? joinStrings(tribeless.map(t => firstAndLast(t.name))) : 'None';
+        const tribelessNames = tribeless.length
+            ? joinStrings(tribeless.map(t => naming.firstAndLast(t.name)))
+            : 'None';
         const waswere = tribeless.length === 1 ? 'was' : 'were';
         return `Generated tribes ${tribeNames} from ${memberNames}. ${tribelessNames} ${waswere} left without a tribe.`;
     }
 
     function start() {
-        const util = createUtil();
-        const universeData = createUniverseData(util, 3);
-        const trustCalibrator = createTrustCalibrator();
-        const relationComputer = createRelationComputer(util, trustCalibrator);
-        const connectionData = createConnectionData(util, universeData, relationComputer);
-        const tribeData = createTribeData(util, universeData, connectionData);
-        simulationData = createSimulationData(universeData, connectionData, tribeData);
         showStatus(simulationData);
         graph = createGraph(simulationData, dark);
         graph.draw();

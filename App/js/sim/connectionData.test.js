@@ -74,8 +74,16 @@ test('given six-step two-way relation with maximum trust, connection strength is
     testNStepConnection(6, 1.0 / 1024);
 });
 
-test('given seven-step two-way relation with maximum trust, connection strength is 0', () => {
-    testNStepConnection(7, 0);
+test('given seven-step two-way relation with maximum trust, connection strength is 1/4096', () => {
+    testNStepConnection(7, 1.0 / 4096);
+});
+
+test('given eight-step two-way relation with maximum trust, connection strength is 1/16384', () => {
+    testNStepConnection(8, 1.0 / 16384);
+});
+
+test('given nine-step two-way relation with maximum trust, connection strength is 0', () => {
+    testNStepConnection(9, 0);
 });
 
 function testNStepConnection(n, expectedStrength) {
