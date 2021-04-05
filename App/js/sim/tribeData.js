@@ -30,6 +30,7 @@ function createTribeData(util, naming, universeData, connectionData) {
             }
         });
         tribes.forEach((t, i) => t.index = i);
+        tribes.sort((a, b) => getDominantTribe(a, b) === a ? -1 : +1);
     }
 
     function areConnected(first, second) {

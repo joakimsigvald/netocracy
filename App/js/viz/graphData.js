@@ -3,10 +3,20 @@
 var createGraphData = function (naming, simulationData, chartWidth, chartHeight, dark) {
     const coloring = createColoring(dark);
     var nodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
-    var links = createLinks(simulationData.getUniverse(), simulationData.getConnections());
+    var links = createLinks(simulationData.getUniverse(), simulationData.getTrust());
 
-    function createLinks(universe, connections) {
-        return connections.map(createLink);
+    function createLinks(universe, trust) {
+        const n = trust.length;
+        const links = [];
+        for (var x = 1; x < n; x++)
+            for (var y = 0; y < x; y++) {
+                const xy = trust[x][y];
+                const yx = trust[y][x];
+                if (yx || xy) {
+                    links.push(createLink({ x, y, strength: {xy, yx} }));
+                }
+            }
+        return links;
 
         function createLink(con) {
             const source = universe.find(i => i.index == con.x).id;
@@ -47,7 +57,7 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
 
     function update(simulationData, chartWidth, chartHeight) {
         var newNodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
-        var newLinks = createLinks(simulationData.getUniverse(), simulationData.getConnections());
+        var newLinks = createLinks(simulationData.getUniverse(), simulationData.getTrust());
         var newNodeIds = newNodes.map(n => n.id);
         var newLinkIds = newLinks.map(l => l.id);
         var oldNodeIds = nodes.map(n => n.id);
@@ -74,6 +84,7 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
         }).map(l => {
             var oldLink = links[oldLinkIds.indexOf(l.id)];
             oldLink.strength = l.strength;
+            oldLink.width = l.width;
             return oldLink;
         });
         nodesToRemove.reverse().forEach(i => nodes.splice(i, 1));
@@ -82,7 +93,7 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
         linksToAdd.forEach(l => links.push(l));
 
         function linksEqual(l1, l2) {
-            return l1.strength === l2.strength;
+            return l1.strength.xy === l2.strength.xy && l1.strength.yx === l2.strength.yx;
         }
 
         return {

@@ -31,7 +31,7 @@ if (typeof test !== 'undefined') {
 }
 
 function testRingOfTrust(n, tribeCount, outsiders) {
-    let universeData = createUniverseData(util, 0, []);
+    let universeData = getUniverseData();
     for (var i = 0; i < n; i++) {
         universeData.addIndividual(universeData.createIndividual(
             [{ index: (n + i - 1) % n, trust: 1 }, { index: (i + 1) % n, trust: 1 }]));
@@ -40,13 +40,13 @@ function testRingOfTrust(n, tribeCount, outsiders) {
     let tribeData = createTribeData(util, naming, universeData, connectionData);
 
     let tribes = tribeData.getTribes();
-    //let grid = connectionData.getGrid();
-    //for (var x = 1; x < n; x++)
-    //    for (var y = 0; y < x; y++)
-    //        expect(grid[x][y]).toBeGreaterThan(0);
     expect(tribes.length).toBe(tribeCount);
     let universe = universeData.getUniverse();
     expect(universe.filter(i => !i.tribe).length).toBe(outsiders);
+}
+
+function getUniverseData() {
+    return createUniverseData(util, trustCalibrator, 3, []);
 }
 
 function getTestSuite() {

@@ -10,7 +10,7 @@ let createUniverseData = require('./universeData');
 let createConnectionData = require('./connectionData');
 
 test('given empty universe, connections are empty', () => {
-    let universeData = createUniverseData(util, 3, []);
+    let universeData = getUniverseData();
     let connectionData = createConnectionData(util, universeData, relationComputer);
     let grid = connectionData.getGrid();
     let ordered = connectionData.getOrdered();
@@ -19,7 +19,7 @@ test('given empty universe, connections are empty', () => {
 });
 
 test('given two individuals with mutualTrust, get one connection with strength 1', () => {
-    let universeData = createUniverseData(util, 3, []);
+    let universeData = getUniverseData();
 
     universeData.addIndividual(universeData.createIndividual([{ index: 1, trust: 1 }]));
     universeData.addIndividual(universeData.createIndividual([{ index: 0, trust: 1 }]));
@@ -38,7 +38,7 @@ test('given two individuals with mutualTrust, get one connection with strength 1
 });
 
 test('given three individuals with mutualTrust, get one connection with strength 0.625', () => {
-    let universeData = createUniverseData(util, 3, []);
+    let universeData = getUniverseData();
 
     universeData.addIndividual(universeData.createIndividual([{ index: 1, trust: 1 }, { index: 2, trust: 1 }]));
     universeData.addIndividual(universeData.createIndividual([{ index: 0, trust: 1 }, { index: 2, trust: 1 }]));
@@ -87,7 +87,7 @@ test('given nine-step two-way relation with maximum trust, connection strength i
 });
 
 function testNStepConnection(n, expectedStrength) {
-    let universeData = createUniverseData(util, 0, []);
+    let universeData = getUniverseData();
 
     universeData.addIndividual(universeData.createIndividual([{ index: 1, trust: 1 }]));
     for (var i = 0; i < n - 1; i++) {
@@ -97,4 +97,8 @@ function testNStepConnection(n, expectedStrength) {
     let connectionData = createConnectionData(util, universeData, relationComputer);
     let grid = connectionData.getGrid();
     expect(grid[n][0]).toBe(expectedStrength);
+}
+
+function getUniverseData() {
+    return createUniverseData(util, trustCalibrator, 3, []);
 }

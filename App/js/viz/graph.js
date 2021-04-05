@@ -42,8 +42,8 @@ var createGraph = function (naming, simulationData, dark) {
             .force('charge', d3.forceManyBody())
             .force("link", d3.forceLink()
                 .id(d => d.id)
-                .strength(d => Math.min(1, d.strength)))
-            .force("collide", d3.forceCollide(d => d.bounds).iterations(16));
+                .strength(d => (d.strength.xy + d.strength.yx) / 2))
+                .force("collide", d3.forceCollide(d => d.bounds).iterations(16));
         setForceCenter();
         link = svg.append("g")
             .attr("class", "links")
@@ -92,9 +92,16 @@ var createGraph = function (naming, simulationData, dark) {
     }
 
     function decorateLink(link) {
-        link.attr("stroke", dark ? "white" : 'black')
-            .attr("stroke-width", l => 4 * Math.max(1, l.strength))
-            .attr("style", l => "stroke-opacity: " + Math.min(1, l.strength));
+        link.attr("stroke", l => getLinkColor(l.strength))
+            .attr("stroke-width", 5)
+            .attr("style", l => "stroke-opacity: " + (Math.abs(l.strength.xy) + Math.abs(l.strength.yx)) / 2);
+    }
+
+    function getLinkColor(strength) {
+        const g = strength.xy < 0 ? 0 : strength.xy > 0 ? 255 : 127;
+        const b = strength.yx < 0 ? 0 : strength.yx > 0 ? 255 : 127;
+        const r = 255 - ~~((b + g) / 2);
+        return `rgb(${r},${g},${b})`;
     }
 
     function visualizeNode(node) {

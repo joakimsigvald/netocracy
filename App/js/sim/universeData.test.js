@@ -2,6 +2,8 @@
 
 let createUtil = require('../fun/util');
 let util = createUtil();
+let createTrustCalibrator = require('./trustCalibrator');
+let trustCalibrator = createTrustCalibrator();
 let createUniverseData = require('./universeData');
 
 if (typeof test !== 'undefined') {
@@ -13,13 +15,13 @@ if (typeof test !== 'undefined') {
 }
 
 function initialUniverseHasFiveIndividuals() {
-    const universeData = createUniverseData(util);
+    const universeData = createUniverseData(util, trustCalibrator);
     const universe = universeData.getUniverse();
     expect(universe.length).toBe(5);
 };
 
 function addedIndividualHasRandomFriends() {
-    const universeData = createUniverseData(util, 3);
+    const universeData = createUniverseData(util, trustCalibrator, 3);
 
     universeData.addIndividual();
 

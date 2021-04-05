@@ -1,6 +1,6 @@
 "use strict";
 
-var createUniverseData = function (util, averageFriends, initialUniverse) {
+var createUniverseData = function (util, trustCalibrator, averageFriends, initialUniverse) {
     var universe = null;
 
     function init() {
@@ -92,9 +92,20 @@ var createUniverseData = function (util, averageFriends, initialUniverse) {
         }
     }
 
+    function getTrust() {
+        const trust = util.create2DArray(universe.length);
+        trustCalibrator.calibrate(universe).forEach(ind => {
+            ind.peers.forEach(p => {
+                trust[ind.index][p.index] = p.trust
+            });
+        });
+        return trust;
+    }
+
     init();
     return {
         getUniverse: () => universe,
+        getTrust: getTrust,
         addIndividual: addIndividual,
         removeIndividual: removeIndividual,
         createIndividual: createIndividual

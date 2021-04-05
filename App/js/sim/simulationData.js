@@ -19,6 +19,7 @@ var createSimulationData = function (universeData, connectionData, tribeData) {
 
     return {
         getUniverse: universeData.getUniverse,
+        getTrust: universeData.getTrust,
         getConnections: connectionData.getOrdered,
         getTribes: tribeData.getTribes,
         addIndividual: addIndividual,
