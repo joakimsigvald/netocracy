@@ -1,6 +1,6 @@
 "use strict";
 
-var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
+var createGraphData = function (naming, simulationData, chartWidth, chartHeight, dark) {
     const coloring = createColoring(dark);
     var nodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
     var links = createLinks(simulationData.getUniverse(), simulationData.getConnections());
@@ -34,7 +34,9 @@ var createGraphData = function (simulationData, chartWidth, chartHeight, dark) {
                 r: nodeRadius,
                 bounds: nodeRadius + nodeMargin,
                 color: getColor(ind),
-                label: ind.membershipNumber ? `${ind.membershipNumber}. ${firstAndLast(ind.name)}` : firstAndLast(ind.name)
+                label: ind.membershipNumber
+                    ? `${ind.membershipNumber}. ${naming.firstAndLast(ind.name)}`
+                    : naming.firstAndLast(ind.name)
             };
         }
 

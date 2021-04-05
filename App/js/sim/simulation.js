@@ -3,7 +3,6 @@
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
 var createSimulation = function (naming, simulationData, dark) {
     var graph = null;
-    var simulationData = null;
 
     function joinStrings(strArr) {
         switch (strArr.length) {
@@ -15,7 +14,7 @@ var createSimulation = function (naming, simulationData, dark) {
         }
     }
 
-    function generateSummary(simulationData) {
+    function generateSummary() {
         const universe = simulationData.getUniverse();
         const tribeNames = joinStrings(simulationData.getTribes().map(t => t.name));
         const memberNames = joinStrings(universe.slice(0, 10)
@@ -30,13 +29,13 @@ var createSimulation = function (naming, simulationData, dark) {
     }
 
     function start() {
-        showStatus(simulationData);
-        graph = createGraph(simulationData, dark);
+        showStatus();
+        graph = createGraph(naming, simulationData, dark);
         graph.draw();
     }
 
-    function showStatus(simulationData) {
-        const summary = generateSummary(simulationData);
+    function showStatus() {
+        const summary = generateSummary();
         $('#statusPane').html(summary);
     }
 

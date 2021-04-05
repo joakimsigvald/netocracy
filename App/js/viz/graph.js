@@ -1,7 +1,7 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createGraph = function (simulationData, dark) {
+var createGraph = function (naming, simulationData, dark) {
     $('#viz_canvas').css('background-color', dark ? 'black' : 'white');
     var svg = d3.select("#viz_canvas").append("svg");
     var chartLayer = svg.append("g").classed("chartLayer", true);
@@ -11,7 +11,7 @@ var createGraph = function (simulationData, dark) {
 
     function draw() {
         computeDimensions();
-        graphData = createGraphData(simulationData, chartWidth, chartHeight, dark);
+        graphData = createGraphData(naming, simulationData, chartWidth, chartHeight, dark);
         drawChart(graphData.getNodes(), graphData.getLinks());
     }
 
