@@ -100,5 +100,5 @@ function testNStepConnection(n, expectedStrength) {
 }
 
 function getUniverseData() {
-    return createUniverseData(util, trustCalibrator, 3, []);
+    return createUniverseData(util, trustCalibrator, []);
 }

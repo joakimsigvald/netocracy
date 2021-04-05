@@ -46,7 +46,7 @@ function testRingOfTrust(n, tribeCount, outsiders) {
 }
 
 function getUniverseData() {
-    return createUniverseData(util, trustCalibrator, 3, []);
+    return createUniverseData(util, trustCalibrator, []);
 }
 
 function getTestSuite() {

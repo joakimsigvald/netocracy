@@ -21,7 +21,7 @@ function initialUniverseHasFiveIndividuals() {
 };
 
 function addedIndividualHasRandomFriends() {
-    const universeData = createUniverseData(util, trustCalibrator, 3);
+    const universeData = createUniverseData(util, trustCalibrator, null, 3, 1);
 
     universeData.addIndividual();
 

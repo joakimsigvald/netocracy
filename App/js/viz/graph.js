@@ -120,6 +120,8 @@ var createGraph = function (naming, simulationData, dark) {
     }
 
     function labelNode(node) {
+        if (node._groups.length > 100)
+            return;
         node.append("text")
             .attr("text-anchor", "middle")
             .attr("dx", 0)

@@ -1,6 +1,6 @@
 "use strict";
 
-var createUniverseData = function (util, trustCalibrator, averageFriends, initialUniverse) {
+var createUniverseData = function (util, trustCalibrator, initialUniverse, newFriendCount, trustSpread) {
     var universe = null;
 
     function init() {
@@ -44,15 +44,17 @@ var createUniverseData = function (util, trustCalibrator, averageFriends, initia
 
     function autoGenerateIndividual() {
         const individual = createIndividual();
-        individual.peers.forEach(p => universe[p.index].peers.push({ index: individual.index, trust: Math.random() }))
+        individual.peers.forEach(p => universe[p.index].peers.push(
+            { index: individual.index, trust: generateTrust() }))
         return individual;
     }
 
     function createIndividual(peers) {
+        const id = universe.length ? util.max(universe, i => i.id) + 1 : 1;
         return {
-            id: util.max(universe, i => i.id) + 1,
+            id: id,
             index: universe.length,
-            name: { first: 'Auto', last: `Generated ${universe.length + 1}` },
+            name: { first: 'Auto', last: `Generated ${id}` },
             peers: peers || generatePeers()
         };
     }
@@ -64,7 +66,12 @@ var createUniverseData = function (util, trustCalibrator, averageFriends, initia
             return { o: util.stocasticShift(n, i.index), i: i.index };
         });
         stocasticIndividuals.sort((a, b) => a.o - b.o);
-        return stocasticIndividuals.slice(0, averageFriends).map(t => { return { index: t.i, trust: Math.random() }; });
+        return stocasticIndividuals.slice(0, newFriendCount)
+            .map(t => { return { index: t.i, trust: generateTrust() }; });
+    }
+
+    function generateTrust() {
+        return 1 - trustSpread * Math.random();
     }
 
     function removeIndividual(removeId) {

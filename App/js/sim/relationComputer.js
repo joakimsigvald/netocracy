@@ -2,7 +2,7 @@
 
 var createRelationComputer = function (util, trustCalibrator) {
     function computeRelations(universe) {
-        const threshold = 0.0001;
+        const threshold = 0.00002;
         const calibratedUniverse = trustCalibrator.calibrate(universe);
         const n = calibratedUniverse.length;
         var relations = util.create2DArray(n);
