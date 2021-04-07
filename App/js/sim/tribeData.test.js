@@ -6,9 +6,8 @@ let createNaming = require('../fun/naming');
 let naming = createNaming();
 let createTrustCalibrator = require('./trustCalibrator');
 let trustCalibrator = createTrustCalibrator();
-let createRelationComputer = require('./relationComputer');
-let relationComputer = createRelationComputer(util, trustCalibrator);
 let createUniverseData = require('./universeData');
+let createRelationComputer = require('./relationComputer');
 let createConnectionData = require('./connectionData');
 let createTribeData = require('./tribeData');
 
@@ -17,36 +16,42 @@ if (typeof test !== 'undefined') {
         testRingOfTrust(11, 1, 0);
     });
 
-    test('ring-of-trust with 15 individuals form two tribes', () => {
+    test('ring-of-trust with 15 individuals form one tribes', () => {
         testRingOfTrust(15, 1, 0);
     });
 
-    test('ring-of-trust with 16 individuals form two tribes', () => {
-        testRingOfTrust(16, 2, 0);
+    test('ring-of-trust with 16 individuals form one tribes', () => {
+        testRingOfTrust(16, 1, 0);
     });
 
-    test('ring-of-trust with 17 individuals form three tribes', () => {
-        testRingOfTrust(17, 3, 0);
+    test('ring-of-trust with 17 individuals form one tribes', () => {
+        testRingOfTrust(17, 1, 0);
+    });
+
+    test('ring-of-trust with 22 individuals form two tribes', () => {
+        testRingOfTrust(22, 2, 0);
     });
 }
 
 function testRingOfTrust(n, tribeCount, outsiders) {
-    let universeData = getUniverseData();
+    let individuals = [];
     for (var i = 0; i < n; i++) {
-        universeData.addIndividual(universeData.createIndividual(
-            [{ index: (n + i - 1) % n, trust: 1 }, { index: (i + 1) % n, trust: 1 }]));
+        individuals.push([{ index: (n + i - 1) % n, trust: 1 }, { index: (i + 1) % n, trust: 1 }]);
     }
-    let connectionData = createConnectionData(util, universeData, relationComputer);
-    let tribeData = createTribeData(util, naming, universeData, connectionData);
+    let tribeData = getTarget(individuals);
 
     let tribes = tribeData.getTribes();
     expect(tribes.length).toBe(tribeCount);
-    let universe = universeData.getUniverse();
-    expect(universe.filter(i => !i.tribe).length).toBe(outsiders);
+    let actualOutsiders = tribeData.getOutsiders();
+    expect(actualOutsiders.length).toBe(outsiders);
 }
 
-function getUniverseData() {
-    return createUniverseData(util, trustCalibrator, []);
+function getTarget(individuals) {
+    let universeData = createUniverseData(util, trustCalibrator, []);
+    individuals.forEach(ind => universeData.addIndividual(universeData.createIndividual(ind)));
+    let relationComputer = createRelationComputer(universeData);
+    let connectionData = createConnectionData(util, relationComputer);
+    return createTribeData(util, naming, universeData, connectionData);
 }
 
 function getTestSuite() {

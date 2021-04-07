@@ -1,81 +1,52 @@
 "use strict";
 
-var createRelationComputer = function (util, trustCalibrator) {
-    function computeRelations(universe) {
-        const threshold = 0.00002;
-        const calibratedUniverse = trustCalibrator.calibrate(universe);
-        const n = calibratedUniverse.length;
-        var relations = util.create2DArray(n);
-        calibratedUniverse.forEach(source => updatePeerRelations(1.0, source, [source.index]));
-        truncateLower(relations, n, 0);
+var createRelationComputer = function (universeData) {
+    function computeRelations() {
+        const iterations = 10;
+        const universe = universeData.getCalibratedUniverse();
+        const n = universe.length;
+        var relations = mergeGenerations(createTrustGenerations());
+        truncateLower(relations)
         return relations;
 
-        function updatePeerRelations(factor, source, ancestorIndices) {
-            if (factor < threshold)
-                return;
-            const firstIndex = ancestorIndices[0];
-            source.peers
-                .filter(peer => !ancestorIndices.includes(peer.index))
-                .forEach(addPeerRelations);
-
-            function addPeerRelations(peer) {
-                var addition = factor * peer.trust;
-                relations[firstIndex][peer.index] = relations[firstIndex][peer.index] + addition;
-                updatePeerRelations(0.5 * addition, calibratedUniverse[peer.index], ancestorIndices.concat([peer.index]));
-            }
-        }
-
-        function truncateLower(relations, n, min) {
+        function truncateLower(relations) {
             for (var x = 0; x < n; x++)
                 for (var y = 0; y < n; y++)
-                    relations[x][y] = Math.max(min, relations[x][y]);
+                    relations[x][y] = Math.max(0, relations[x][y]);
         }
-    }
 
-    function computeRelations2(universe) {
-        const threshold = 0.00002;
-        const calibratedUniverse = trustCalibrator.calibrate(universe);
-        const n = calibratedUniverse.length;
-        var relations = calibratedUniverse.map(source => computeSourceRelations(1.0, source, [source.index]) || createZeroArray(n));
-        truncateLower(relations, n, 0);
-        return relations;
+        function createTrustGenerations() {
+            const generations = new Array(n);
+            generations[0] = universeData.getTrust();
+            for (var gen = 1; gen < iterations; gen++) {
+                generations[gen] = computeNextGeneration(generations[gen - 1]);
+            }
+            return generations;
+        }
 
-        function computeSourceRelations(factor, source, ancestorIndices) {
-            if (factor < threshold)
-                return null;
-            const additions = source.peers
-                .filter(peer => !ancestorIndices.includes(peer.index))
-                .map(computePeerRelations);
-            if (!additions.length)
-                return null;
-            if (additions.length === 1)
-                return additions[0];
-            const retVal = additions.shift();
-            additions.forEach(addition => {
-                for (var i = 0; i < n; i++) {
-                    retVal[i] = retVal[i] + addition[i];
+        function computeNextGeneration(currentGen) {
+            var nextGen = universe.map(d => {
+                const row = new Array(n);
+                const friends = d.peers.filter(p => p.trust > 0)
+                    .map(f => { return { weight: f.trust / 2, trusts: currentGen[f.index] }; });
+                for (var y = 0; y < n; y++) {
+                    row[y] = y === d.index ? 0 : friends.reduce((sum, f) => sum + f.weight * f.trusts[y], 0); // apply threshold?;
+                }
+                return row;
+            });
+            return nextGen;
+        }
+
+        function mergeGenerations(generations) {
+            const retVal = generations.shift();
+            generations.forEach(gen => {
+                for (var x = 0; x < n; x++) {
+                    for (var y = 0; y < n; y++) {
+                        retVal[x][y] = retVal[x][y] + gen[x][y];
+                    }
                 }
             });
             return retVal;
-
-            function computePeerRelations(peer) {
-                const addition = factor * peer.trust;
-                const sourceRelations = computeSourceRelations(
-                    0.5 * addition, calibratedUniverse[peer.index], ancestorIndices.concat([peer.index]))
-                    || createZeroArray(n);
-                sourceRelations[peer.index] = sourceRelations[peer.index] + addition;
-                return sourceRelations;
-            }
-        }
-
-        function createZeroArray(n) {
-            return new Array(n).fill(0);
-        }
-
-        function truncateLower(relations, n, min) {
-            for (var x = 0; x < n; x++)
-                for (var y = 0; y < n; y++)
-                    relations[x][y] = Math.max(min, relations[x][y]);
         }
     }
 

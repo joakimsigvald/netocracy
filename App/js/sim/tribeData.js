@@ -102,10 +102,15 @@ function createTribeData(util, naming, universeData, connectionData) {
         member.membershipNumber = n;
     }
 
+    function getOutsiders() {
+        return universeData.getUniverse().filter(i => !i.tribe);
+    }
+
     createTribes();
     return {
         update: createTribes,
-        getTribes: () => tribes
+        getTribes: () => tribes,
+        getOutsiders: getOutsiders
     };
 }
 

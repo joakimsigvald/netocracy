@@ -6,8 +6,8 @@ function startSimulation() {
     const naming = createNaming();
     const trustCalibrator = createTrustCalibrator();
     const universeData = createUniverseData(util, trustCalibrator, [], 20, 0);
-    const relationComputer = createRelationComputer(util, trustCalibrator);
-    const connectionData = createConnectionData(util, universeData, relationComputer);
+    const relationComputer = createRelationComputer(universeData);
+    const connectionData = createConnectionData(util, relationComputer);
     const tribeData = createTribeData(util, naming, universeData, connectionData);
     const simulationData = createSimulationData(universeData, connectionData, tribeData);
 

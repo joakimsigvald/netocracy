@@ -1,16 +1,15 @@
 "use strict";
 
-var createConnectionData = function (util, universeData, relationComputer) {
+var createConnectionData = function (util, relationComputer) {
     var grid = null;
 
     function computeGrid() {
-        const universe = universeData.getUniverse();
-        const relations = relationComputer.computeRelations(universe);
-        grid = computeConnectionGrid(universe, relations);
+        const relations = relationComputer.computeRelations();
+        grid = computeConnectionGrid(relations);
     }
 
-    function computeConnectionGrid(universe, relations) {
-        const n = universe.length;
+    function computeConnectionGrid(relations) {
+        const n = relations.length;
         var connections = util.create2DArray(n);
         traverse(n, (x, y) => {
             connections[x][y] = Math.sqrt(relations[x][y] * relations[y][x]);

@@ -115,7 +115,8 @@ var createUniverseData = function (util, trustCalibrator, initialUniverse, newFr
         getTrust: getTrust,
         addIndividual: addIndividual,
         removeIndividual: removeIndividual,
-        createIndividual: createIndividual
+        createIndividual: createIndividual,
+        getCalibratedUniverse: () => trustCalibrator.calibrate(universe)
     };
 }
 
