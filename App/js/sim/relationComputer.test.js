@@ -116,7 +116,7 @@ function computeRelations(universe) {
 
 function createTarget(universe) {
     let universeData = createUniverseData(util, trustCalibrator, universe);
-    return createRelationComputer(universeData);
+    return createRelationComputer(universeData, 10);
 }
 
 function createUniverse(allTrusts) {

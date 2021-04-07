@@ -1,11 +1,17 @@
 "use strict";
 
-var createRelationComputer = function (universeData) {
+var createRelationComputer = function (universeData, iterations) {
     function computeRelations() {
-        const iterations = 10;
         const universe = universeData.getCalibratedUniverse();
         const n = universe.length;
-        var relations = mergeGenerations(createTrustGenerations());
+        var generation = universeData.getTrust();
+        let relations = generation.map((row) => [...row]);
+        let friendships = universe.map(d =>
+            d.peers.filter(p => p.trust > 0).map(f => { return { index: f.index, weight: f.trust / 2 }; }));
+        for (var gen = 1; gen < iterations; gen++) {
+            generation = computeNextGeneration(friendships, generation);
+            addMatrix(relations, generation)
+        }
         truncateLower(relations)
         return relations;
 
@@ -15,38 +21,24 @@ var createRelationComputer = function (universeData) {
                     relations[x][y] = Math.max(0, relations[x][y]);
         }
 
-        function createTrustGenerations() {
-            const generations = new Array(n);
-            generations[0] = universeData.getTrust();
-            for (var gen = 1; gen < iterations; gen++) {
-                generations[gen] = computeNextGeneration(generations[gen - 1]);
-            }
-            return generations;
-        }
-
-        function computeNextGeneration(currentGen) {
-            var nextGen = universe.map(d => {
+        function computeNextGeneration(friendships, currentGen) {
+            var nextGen = friendships.map((friends, index) => {
                 const row = new Array(n);
-                const friends = d.peers.filter(p => p.trust > 0)
-                    .map(f => { return { weight: f.trust / 2, trusts: currentGen[f.index] }; });
+                const weightedTrusts = friends.map(f => { return { weight: f.weight, trusts: currentGen[f.index] }; });
                 for (var y = 0; y < n; y++) {
-                    row[y] = y === d.index ? 0 : friends.reduce((sum, f) => sum + f.weight * f.trusts[y], 0); // apply threshold?;
+                    row[y] = y === index ? 0 : weightedTrusts.reduce((sum, f) => sum + f.weight * f.trusts[y], 0);
                 }
                 return row;
             });
             return nextGen;
         }
 
-        function mergeGenerations(generations) {
-            const retVal = generations.shift();
-            generations.forEach(gen => {
-                for (var x = 0; x < n; x++) {
-                    for (var y = 0; y < n; y++) {
-                        retVal[x][y] = retVal[x][y] + gen[x][y];
-                    }
+        function addMatrix(first, second) {
+            for (var x = 0; x < n; x++) {
+                for (var y = 0; y < n; y++) {
+                    first[x][y] = first[x][y] + second[x][y];
                 }
-            });
-            return retVal;
+            }
         }
     }
 

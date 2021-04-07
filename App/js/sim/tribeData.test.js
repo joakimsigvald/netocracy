@@ -49,7 +49,7 @@ function testRingOfTrust(n, tribeCount, outsiders) {
 function getTarget(individuals) {
     let universeData = createUniverseData(util, trustCalibrator, []);
     individuals.forEach(ind => universeData.addIndividual(universeData.createIndividual(ind)));
-    let relationComputer = createRelationComputer(universeData);
+    let relationComputer = createRelationComputer(universeData, 10);
     let connectionData = createConnectionData(util, relationComputer);
     return createTribeData(util, naming, universeData, connectionData);
 }
