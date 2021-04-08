@@ -39,8 +39,8 @@ var createSimulation = function (naming, simulationData, dark) {
         $('#statusPane').html(summary);
     }
 
-    function addIndividual() {
-        simulationData.addIndividual();
+    function addIndividuals(n) {
+        simulationData.addIndividuals(n);
         update();
     }
 
@@ -59,7 +59,7 @@ var createSimulation = function (naming, simulationData, dark) {
 
     return {
         start: start,
-        addIndividual: addIndividual,
+        addIndividuals: addIndividuals,
         deleteSelectedIndividual: deleteSelectedIndividual
     };
 }

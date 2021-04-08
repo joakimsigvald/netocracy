@@ -44,9 +44,7 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
                 r: nodeRadius,
                 bounds: nodeRadius + nodeMargin,
                 color: getColor(ind),
-                label: ind.membershipNumber
-                    ? `${ind.membershipNumber}. ${naming.firstAndLast(ind.name)}`
-                    : naming.firstAndLast(ind.name)
+                label: `${ind.id}`
             };
         }
 

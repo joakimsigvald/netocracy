@@ -3,8 +3,10 @@
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
 var createSimulationData = function (universeData, connectionData, tribeData) {
 
-    function addIndividual() {
-        universeData.addIndividual();
+    function addIndividuals(n) {
+        for (var i = 0; i < n; i++) {
+            universeData.addIndividual();
+        }
         update()    }
 
     function removeIndividual(id) {
@@ -22,7 +24,7 @@ var createSimulationData = function (universeData, connectionData, tribeData) {
         getTrust: universeData.getTrust,
         getConnections: connectionData.getOrdered,
         getTribes: tribeData.getTribes,
-        addIndividual: addIndividual,
+        addIndividuals: addIndividuals,
         removeIndividual: removeIndividual
     };
 }
