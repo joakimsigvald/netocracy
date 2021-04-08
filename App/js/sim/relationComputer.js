@@ -21,16 +21,14 @@ var createRelationComputer = function (universeData, iterations) {
                     relations[x][y] = Math.max(0, relations[x][y]);
         }
 
+        //TODO: parallelize using https://parallel.js.org/
         function computeNextGeneration(friendships, currentGen) {
-            var nextGen = friendships.map((friends, index) => {
-                const row = new Array(n);
-                const weightedTrusts = friends.map(f => { return { weight: f.weight, trusts: currentGen[f.index] }; });
-                for (var y = 0; y < n; y++) {
-                    row[y] = y === index ? 0 : weightedTrusts.reduce((sum, f) => sum + f.weight * f.trusts[y], 0);
-                }
-                return row;
-            });
-            return nextGen;
+            return friendships.map((friends, x) => computeNextIndividualRelations(currentGen, friends, x));
+        }
+
+        function computeNextIndividualRelations(currentGen, friends, x) {
+            const weightedTrusts = friends.map(f => scale(currentGen[f.index], f.weight));
+            return [...Array(n).keys()].map(y => y === x ? 0 : weightedTrusts.reduce((sum, wt) => sum + wt[y], 0))
         }
 
         function addMatrix(first, second) {
@@ -40,6 +38,10 @@ var createRelationComputer = function (universeData, iterations) {
                 }
             }
         }
+    }
+
+    function scale(arr, weight) {
+        return arr.map(v => v * weight);
     }
 
     return {
