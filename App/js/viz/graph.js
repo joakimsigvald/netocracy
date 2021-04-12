@@ -1,7 +1,7 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createGraph = function (naming, simulationData, dark) {
+var createGraph = function (naming, dark) {
     $('#viz_canvas').css('background-color', dark ? 'black' : 'white');
     var svg = d3.select("#viz_canvas").append("svg");
     var chartLayer = svg.append("g").classed("chartLayer", true);
@@ -9,9 +9,10 @@ var createGraph = function (naming, simulationData, dark) {
     var graphData, simulation, link, node;
     var chartWidth, chartHeight;
 
-    function draw() {
+    function draw(universe, tribes, trust) {
         computeDimensions();
-        graphData = createGraphData(naming, simulationData, chartWidth, chartHeight, dark);
+        graphData = createGraphData(naming, chartWidth, chartHeight, dark);
+        graphData.init(universe, tribes, trust);
         drawChart(graphData.getNodes(), graphData.getLinks());
     }
 
@@ -151,8 +152,8 @@ var createGraph = function (naming, simulationData, dark) {
         simulation.force("link").links(links);
     }
 
-    function update(simulationData) {
-        var updated = graphData.update(simulationData, chartWidth, chartHeight);
+    function update(universe, trust, tribes) {
+        var updated = graphData.update(universe, trust, tribes, chartWidth, chartHeight);
         if (updated.addedOrRemoved) {
             replaceNodesAndLinks(graphData.getNodes(), graphData.getLinks());
             updateNodesAndLinks(updated.nodesToUpdate, updated.linksToUpdate);

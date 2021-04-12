@@ -1,9 +1,14 @@
 "use strict";
 
-var createGraphData = function (naming, simulationData, chartWidth, chartHeight, dark) {
+var createGraphData = function (chartWidth, chartHeight, dark) {
     const coloring = createColoring(dark);
-    var nodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
-    var links = createLinks(simulationData.getUniverse(), simulationData.getTrust());
+    let nodes = [];
+    let links = [];
+
+    function init(universe, tribes, trust) {
+        nodes = createNodes(universe, tribes.length, chartWidth, chartHeight);
+        links = createLinks(universe, trust);
+    }
 
     function createLinks(universe, trust) {
         const n = trust.length;
@@ -53,17 +58,17 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
         }
     }
 
-    function update(simulationData, chartWidth, chartHeight) {
-        var newNodes = createNodes(simulationData.getUniverse(), simulationData.getTribes().length, chartWidth, chartHeight);
-        var newLinks = createLinks(simulationData.getUniverse(), simulationData.getTrust());
-        var newNodeIds = newNodes.map(n => n.id);
-        var newLinkIds = newLinks.map(l => l.id);
-        var oldNodeIds = nodes.map(n => n.id);
-        var oldLinkIds = links.map(l => l.id);
+    function update(universe, trust, tribes, chartWidth, chartHeight) {
+        const newNodes = createNodes(universe, tribes.length, chartWidth, chartHeight);
+        const newLinks = createLinks(universe, trust);
+        const newNodeIds = newNodes.map(n => n.id);
+        const newLinkIds = newLinks.map(l => l.id);
+        const oldNodeIds = nodes.map(n => n.id);
+        const oldLinkIds = links.map(l => l.id);
 
-        var nodesToAdd = newNodes.filter(n => oldNodeIds.indexOf(n.id) === -1);
-        var nodesToRemove = nodes.filter(n => newNodeIds.indexOf(n.id) === -1).map(l => oldNodeIds.indexOf(l.id));
-        var nodesToUpdate = newNodes
+        const nodesToAdd = newNodes.filter(n => oldNodeIds.indexOf(n.id) === -1);
+        const nodesToRemove = nodes.filter(n => newNodeIds.indexOf(n.id) === -1).map(l => oldNodeIds.indexOf(l.id));
+        const nodesToUpdate = newNodes
             .filter(nn => oldNodeIds.indexOf(nn.id) > -1)
             .map(nn => {
                 var oldNode = nodes[oldNodeIds.indexOf(nn.id)];
@@ -74,13 +79,13 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
                 return nn.id;
             });
 
-        var linksToAdd = newLinks.filter(l => oldLinkIds.indexOf(l.id) === -1);
-        var linksToRemove = links.filter(l => newLinkIds.indexOf(l.id) === -1).map(l => oldLinkIds.indexOf(l.id));
-        var linksToUpdate = newLinks.filter(l => {
-            var index = oldLinkIds.indexOf(l.id);
+        const linksToAdd = newLinks.filter(l => oldLinkIds.indexOf(l.id) === -1);
+        const linksToRemove = links.filter(l => newLinkIds.indexOf(l.id) === -1).map(l => oldLinkIds.indexOf(l.id));
+        const linksToUpdate = newLinks.filter(l => {
+            let index = oldLinkIds.indexOf(l.id);
             return index !== -1 && !linksEqual(l, links[index]);
         }).map(l => {
-            var oldLink = links[oldLinkIds.indexOf(l.id)];
+            let oldLink = links[oldLinkIds.indexOf(l.id)];
             oldLink.strength = l.strength;
             oldLink.width = l.width;
             return oldLink;
@@ -102,6 +107,7 @@ var createGraphData = function (naming, simulationData, chartWidth, chartHeight,
     }
 
     return {
+        init: init,
         getNodes: () => nodes,
         getLinks: () => links,
         update: update

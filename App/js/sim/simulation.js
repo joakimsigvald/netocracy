@@ -1,8 +1,9 @@
 "use strict";
 
 //Specification: https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
-var createSimulation = function (naming, simulationData, dark) {
-    var graph = null;
+var createSimulation = function (naming, universeComputer, connectionComputer, tribeComputer, dark) {
+    const graph = createGraph(naming, dark);
+    let universe = [];
 
     function joinStrings(strArr) {
         switch (strArr.length) {
@@ -14,9 +15,8 @@ var createSimulation = function (naming, simulationData, dark) {
         }
     }
 
-    function generateSummary() {
-        const universe = simulationData.getUniverse();
-        const tribeNames = joinStrings(simulationData.getTribes().map(t => t.name));
+    function generateSummary(tribes) {
+        const tribeNames = joinStrings(tribes.map(t => t.name));
         const memberNames = joinStrings(universe.slice(0, 10)
             .map(t => naming.firstAndLast(t.name)))
             + (universe.length > 10 ? '...' : '');
@@ -29,32 +29,38 @@ var createSimulation = function (naming, simulationData, dark) {
     }
 
     function start() {
-        showStatus();
-        graph = createGraph(naming, simulationData, dark);
-        graph.draw();
+        showStatus([]);
+        graph.draw(universe, [], []);
     }
 
-    function showStatus() {
-        const summary = generateSummary();
+    function showStatus(tribes) {
+        const summary = generateSummary(tribes);
         $('#statusPane').html(summary);
     }
 
     function addIndividuals(n) {
-        simulationData.addIndividuals(n);
-        update();
+        universe = universeComputer.generateIndividuals(universe, n);
+        simulate(universe);
     }
 
     function deleteSelectedIndividual() {
         var selected = graph.getSelectedIndividual();
         if (selected) {
-            simulationData.removeIndividual(selected.id);
-            update();
+            universe = universeComputer.removeIndividual(universe, selected.id);
+            simulate(universe);
         }
     }
 
-    function update() {
-        graph.update(simulationData);
-        showStatus(simulationData);
+    function simulate(universe) {
+        connectionComputer.computeConnectionGrid(universe, connections => {
+            tribeComputer.computeTribes(universe, connections, update);
+        });
+    }
+
+    function update(tribes) {
+        const trust = universeComputer.getTrust(universe);
+        graph.update(universe, trust, tribes);
+        showStatus(tribes);
     }
 
     return {

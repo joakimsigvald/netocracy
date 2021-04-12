@@ -1,14 +1,14 @@
 "use strict";
 
-var createConnectionData = function (util, relationComputer) {
-    var grid = null;
-
-    function computeGrid() {
-        const relations = relationComputer.computeRelations();
-        grid = computeConnectionGrid(relations);
+var createConnectionComputer = function (util, relationComputer) {
+    function computeGrid(universe, callback) {
+        relationComputer.computeRelations(universe, relations => {
+            const grid = aggregateRelations(relations);
+            callback(grid);
+        });
     }
 
-    function computeConnectionGrid(relations) {
+    function aggregateRelations(relations) {
         const n = relations.length;
         var connections = util.create2DArray(n);
         traverse(n, (x, y) => {
@@ -37,14 +37,12 @@ var createConnectionData = function (util, relationComputer) {
                 action(x, y);
     }
 
-    computeGrid();
     return {
-        update: computeGrid,
-        getGrid: () => grid,
-        getOrdered: () => orderByDecreasingStrength(grid)
+        computeConnectionGrid: computeGrid,
+        getOrderedConnections: orderByDecreasingStrength
     };
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = createConnectionData;
+    module.exports = createConnectionComputer;
 }

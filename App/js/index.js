@@ -1,18 +1,16 @@
-var simulation = null;
+let simulation = null;
 
 function startSimulation() {
 
     const util = createUtil();
     const naming = createNaming();
     const trustCalibrator = createTrustCalibrator();
-    const universeData = createUniverseData(util, trustCalibrator, [], 3, 0);
-    const relationComputer = createRelationComputer(universeData, 10);
-    const connectionData = createConnectionData(util, relationComputer);
-    const tribeData = createTribeData(util, naming, universeData, connectionData);
-    const simulationData = createSimulationData(universeData, connectionData, tribeData);
+    const universeComputer = createUniverseComputer(util, trustCalibrator, 3, 0);
+    const relationComputer = createRelationComputer(universeComputer, 10);
+    const connectionComputer = createConnectionComputer(util, relationComputer);
+    const tribeComputer = createTribeComputer(util, naming, connectionComputer);
 
-
-    simulation = createSimulation(naming, simulationData, true);
+    simulation = createSimulation(naming, universeComputer, connectionComputer, tribeComputer, true);
     $('#startSimulationBtn').hide();
     $('#addIndividualBtn').show();
     simulation.start();
@@ -32,7 +30,7 @@ function startSimulation() {
                 addIndividuals(10);
                 break;
             default:
-                // No operation
+            // No operation
         }
     });
 }

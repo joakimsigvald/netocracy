@@ -8,6 +8,7 @@ function createTrustCalibrator() {
 
     function calibrateIndividual(ind) {
         return {
+            id: ind.id,
             index: ind.index,
             name: ind.name,
             peers: calibratePeers(ind.peers)
