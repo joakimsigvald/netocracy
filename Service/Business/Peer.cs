@@ -1,6 +1,6 @@
-﻿namespace Console
+﻿namespace Netocracy.Console.Business
 {
-    public class Peer
+    public struct Peer
     {
         public int Index { get; set; }
         public float Trust { get; set; }

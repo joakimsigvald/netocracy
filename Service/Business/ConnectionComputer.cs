@@ -2,28 +2,28 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Console
+namespace Netocracy.Console.Business
 {
     public class ConnectionComputer
     {
-        public static float[][] ComputeConnections(float[][] relations)
+        public static float[,] ComputeConnections(Matrix relations)
         {
-            var n = relations.Length;
-            var connections = Util.Create2DArray(n);
+            var n = relations.Size;
+            var connections = new float[n,n];
             Traverse(n, (x, y) =>
             {
-                connections[x][y] = (float)Math.Sqrt(relations[x][y] * relations[y][x]);
+                connections[x,y] = (float)Math.Sqrt(relations[x,y] * relations[y,x]);
             });
             return connections;
         }
 
-        public static (int x, int y, float strength)[] OrderByDecreasingStrength(float[][] connections)
+        public static (int x, int y, float strength)[] OrderByDecreasingStrength(float[,] connections)
         {
             var res = new List<(int x, int y, float strength)>();
-            var n = connections.Length;
+            var n = connections.GetLength(0);
             Traverse(n, (x, y) =>
             {
-                var strength = connections[x][y];
+                var strength = connections[x,y];
                 if (strength > 0)
                     res.Add((x, y, strength));
             });

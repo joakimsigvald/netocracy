@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Console
+namespace Netocracy.Console.Business
 {
     public static class IndividualComputer
     {
@@ -13,7 +13,7 @@ namespace Console
             {
                 var newInd = new Individual
                 {
-                    Id = i,
+                    Id = i + 1,
                     Index = i,
                     Peers = GeneratePeers(individuals, friends, foes).ToList()
                 };
@@ -26,7 +26,7 @@ namespace Console
             return individuals.Select(Calibrate).ToArray();
         }
 
-        private static Individual Calibrate(Individual individual)
+        public static Individual Calibrate(Individual individual)
         {
             return new Individual
             {
@@ -68,7 +68,7 @@ namespace Console
         {
             var nBits = (int)Math.Ceiling(Math.Log2(n));
             var bound = 1 << nBits;
-            var shifted = (bound - n - 1 + number) << 1;
+            var shifted = bound - n - 1 + number << 1;
             return shifted < bound ? shifted : (shifted + 1) % bound;
         }
     }

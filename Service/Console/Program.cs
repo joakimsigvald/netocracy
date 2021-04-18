@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Netocracy.Console.Business;
+using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace Console
+namespace Netocracy.Console.Console
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var count = GetArg(0, "count", args);
             var friends = GetArg(1, "friends", args);
@@ -20,7 +22,7 @@ namespace Console
             System.Console.WriteLine($"Generating {count} individuals took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            var relations = relationComputer.ComputeRelations(individuals);
+            var relations = await relationComputer.ComputeRelations(individuals);
             stopwatch.Stop();
             System.Console.WriteLine($"Computing relations took {stopwatch.ElapsedMilliseconds} ms");
 

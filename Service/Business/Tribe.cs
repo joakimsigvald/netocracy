@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Console
+namespace Netocracy.Console.Business
 {
     public class Tribe
     {

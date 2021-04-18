@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Console
+namespace Netocracy.Console.Business
 {
     public class TribeComputer
     {
-        public static Tribe[] ComputeTribes(Individual[] individuals, float[][] connections)
+        public static Tribe[] ComputeTribes(Individual[] individuals, float[,] connections)
         {
             var tribes = new List<Tribe>();
             foreach (var ind in individuals)
@@ -45,7 +45,7 @@ namespace Console
             bool AreConnected(Individual first, Individual second)
                 => first.Index < second.Index
                     ? AreConnected(second, first)
-                    : connections[first.Index][second.Index] > 0;
+                    : connections[first.Index,second.Index] > 0;
 
             bool CanJoinTribe(Individual aspiringMember, Tribe tribe)
                 => tribe.Members.All(member => AreConnected(aspiringMember, member));
@@ -79,7 +79,7 @@ namespace Console
                 var n = indices.Length;
                 for (var x = 1; x < n; x++)
                     for (var y = 0; y < x; y++)
-                        if (connections[indices[x]][indices[y]] == 0)
+                        if (connections[indices[x],indices[y]] == 0)
                             return false;
                 return true;
             }
@@ -99,7 +99,7 @@ namespace Console
             {
                 var ind1 = members[0];
                 var ind2 = members[1];
-                return Math.Max(connections[ind1.Index][ind2.Index], connections[ind2.Index][ind1.Index]);
+                return Math.Max(connections[ind1.Index,ind2.Index], connections[ind2.Index,ind1.Index]);
             }
 
             void CreateTribe(params Individual[] members)
