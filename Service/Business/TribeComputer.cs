@@ -9,12 +9,11 @@ namespace Netocracy.Console.Business
         public static Tribe[] ComputeTribes(Individual[] individuals, float[,] connections)
         {
             var tribes = new List<Tribe>();
-            foreach (var ind in individuals)
-                SetMembership(ind, null, 0);
+            var inhabitants = individuals.Select(ToInhabitant).ToArray();
             foreach (var (x, y, strength) in ConnectionComputer.OrderByDecreasingStrength(connections))
             {
-                var first = individuals[x];
-                var second = individuals[y];
+                var first = inhabitants[x];
+                var second = inhabitants[y];
                 if (first.Tribe is null)
                 {
                     if (second.Tribe is null)
@@ -42,15 +41,15 @@ namespace Netocracy.Console.Business
                 tribes[i].Index = i;
             return tribes.OrderByDescending(GetDominance).ToArray();
 
-            bool AreConnected(Individual first, Individual second)
+            bool AreConnected(Inhabitant first, Inhabitant second)
                 => first.Index < second.Index
                     ? AreConnected(second, first)
                     : connections[first.Index,second.Index] > 0;
 
-            bool CanJoinTribe(Individual aspiringMember, Tribe tribe)
+            bool CanJoinTribe(Inhabitant aspiringMember, Tribe tribe)
                 => tribe.Members.All(member => AreConnected(aspiringMember, member));
 
-            void TryJoinTribe(Individual aspiringMember, Tribe tribe)
+            void TryJoinTribe(Inhabitant aspiringMember, Tribe tribe)
             {
                 if (!CanJoinTribe(aspiringMember, tribe))
                     return;
@@ -58,7 +57,7 @@ namespace Netocracy.Console.Business
                 SetMembership(aspiringMember, tribe, tribe.Members.Count);
             }
 
-            void TryMergeTribes(Individual first, Individual second)
+            void TryMergeTribes(Inhabitant first, Inhabitant second)
             {
                 var dominantTribe = GetDominantTribe(first.Tribe, second.Tribe);
                 var secondaryTribe = dominantTribe == first.Tribe ? second.Tribe : first.Tribe;
@@ -70,7 +69,7 @@ namespace Netocracy.Console.Business
                 CreateTribe(allMembers);
             }
 
-            bool CanFormOneTribe(Individual[] aspiringMembers)
+            bool CanFormOneTribe(Inhabitant[] aspiringMembers)
             {
                 var indices = aspiringMembers
                     .Select(m => m.Index).ToArray()
@@ -95,14 +94,14 @@ namespace Netocracy.Console.Business
                 return tribe1.FoundingBond > tribe2.FoundingBond ? tribe1 : tribe2;
             }
 
-            float GetFoundingBond(params Individual[] members)
+            float GetFoundingBond(params Inhabitant[] members)
             {
                 var ind1 = members[0];
                 var ind2 = members[1];
                 return Math.Max(connections[ind1.Index,ind2.Index], connections[ind2.Index,ind1.Index]);
             }
 
-            void CreateTribe(params Individual[] members)
+            void CreateTribe(params Inhabitant[] members)
             {
                 var tribe = new Tribe
                 {
@@ -116,7 +115,14 @@ namespace Netocracy.Console.Business
             }
         }
 
-        private static void SetMembership(Individual member, Tribe tribe, int n)
+        private static Inhabitant ToInhabitant(Individual ind, int i) => new()
+        { 
+            Id = ind.Id,
+            Index = i,
+            Peers = ind.Peers
+        };
+
+        private static void SetMembership(Inhabitant member, Tribe tribe, int n)
         {
             member.Tribe = tribe;
             member.MembershipNumber = n;

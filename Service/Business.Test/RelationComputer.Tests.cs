@@ -37,14 +37,13 @@ namespace Netocracy.Console.Business.Test
         public async Task GivenCircleOfConnectedIndividuals_WhenComputeRelations_TheyAre_1(int count, float strength)
         {
             var individuals = Enumerable.Range(0, count).Select(i => new Individual {
-                Id = i + 1,
-                Index = i
+                Id = i + 1
             }).ToArray();
             for (var i = 0; i < count; i++) {
                 individuals[i].Peers = new[] {
                     new Peer { Index = (i + count - 1) % count, Trust = 1 },
                     new Peer { Index = (i + 1) % count, Trust = 1 }
-                }.ToList();
+                };
             }
             individuals = individuals.Select(IndividualComputer.Calibrate).ToArray();
             var computer = new RelationComputer(100);

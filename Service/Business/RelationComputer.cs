@@ -73,9 +73,11 @@ namespace Netocracy.Console.Business
         private static Matrix GetTrust(Individual[] individuals)
         {
             var m = new Matrix(individuals.Length);
-            foreach (var ind in individuals)
+            for (var x = 0; x < individuals.Length; x++) {
+                var ind = individuals[x];
                 foreach (var peer in ind.Peers)
-                    m[ind.Index, peer.Index] = peer.Trust;
+                    m[x, peer.Index] = peer.Trust;
+            }
             return m;
         }
     }

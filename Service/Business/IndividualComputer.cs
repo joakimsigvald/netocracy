@@ -8,31 +8,36 @@ namespace Netocracy.Console.Business
     {
         public static Individual[] GenerateIndividuals(int count, int friends, int foes)
         {
-            var individuals = new List<Individual>();
+            var pods = new List<Pod>();
             for (var i = 0; i < count; i++)
             {
-                var newInd = new Individual
+                var newInd = new Pod
                 {
                     Id = i + 1,
                     Index = i,
-                    Peers = GeneratePeers(individuals, friends, foes).ToList()
+                    Peers = GeneratePeers(pods, friends, foes).ToList()
                 };
                 foreach (var peer in newInd.Peers)
                 {
-                    individuals[peer.Index].Peers.Add(new Peer { Index = newInd.Index, Trust = peer.Trust });
+                    pods[peer.Index].Peers.Add(new Peer { Index = newInd.Index, Trust = peer.Trust });
                 }
-                individuals.Add(newInd);
+                pods.Add(newInd);
             }
-            return individuals.Select(Calibrate).ToArray();
+            return pods.Select(MapToIndividual).Select(Calibrate).ToArray();
         }
+
+        private static Individual MapToIndividual(Pod pod) => new()
+        {
+            Id = pod.Id,
+            Peers = pod.Peers.ToArray()
+        };
 
         public static Individual Calibrate(Individual individual)
         {
             return new Individual
             {
                 Id = individual.Id,
-                Index = individual.Index,
-                Peers = Calibrate(individual.Peers).ToList()
+                Peers = Calibrate(individual.Peers).ToArray()
             };
 
             IEnumerable<Peer> Calibrate(IList<Peer> peers)
@@ -52,15 +57,15 @@ namespace Netocracy.Console.Business
                 => peers.Select(p => Math.Abs(p.Trust)).ToArray();
         }
 
-        private static IEnumerable<Peer> GeneratePeers(List<Individual> individuals, int friendCount, int foeCount)
+        private static IEnumerable<Peer> GeneratePeers(List<Pod> pods, int friendCount, int foeCount)
         {
-            var n = individuals.Count;
-            var stocasticIndividuals = individuals
+            var n = pods.Count;
+            var stocasticPods = pods
                 .Select(ind => (o: StocasticShift(n, ind.Index), i: ind.Index))
                 .OrderBy(t => t.o)
                 .ToArray();
-            var friends = stocasticIndividuals.Take(friendCount).Select((_, i) => new Peer { Index = i, Trust = 1 });
-            var foes = stocasticIndividuals.Skip(friendCount).Take(foeCount).Select((_, i) => new Peer { Index = i, Trust = 1 });
+            var friends = stocasticPods.Take(friendCount).Select((_, i) => new Peer { Index = i, Trust = 1 });
+            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, i) => new Peer { Index = i, Trust = 1 });
             return friends.Concat(foes);
         }
 

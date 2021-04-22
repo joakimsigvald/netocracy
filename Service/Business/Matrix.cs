@@ -5,7 +5,7 @@ namespace Netocracy.Console.Business
 {
     public class Matrix
     {
-        private float[][] _elements;
+        private readonly float[][] _elements;
 
         public Matrix(int size) => _elements = Enumerable.Range(0, size).Select(x => new float[size]).ToArray();
 

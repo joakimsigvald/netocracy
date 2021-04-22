@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Business", "Business\Busine
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Business.Test", "Business.Test\Business.Test.csproj", "{27026338-AA64-443B-B907-9A27E9E311C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{F2F2F6DB-833D-4184-88CD-23B3159A2D7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{27026338-AA64-443B-B907-9A27E9E311C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{27026338-AA64-443B-B907-9A27E9E311C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{27026338-AA64-443B-B907-9A27E9E311C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2F2F6DB-833D-4184-88CD-23B3159A2D7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2F2F6DB-833D-4184-88CD-23B3159A2D7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2F2F6DB-833D-4184-88CD-23B3159A2D7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2F2F6DB-833D-4184-88CD-23B3159A2D7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
