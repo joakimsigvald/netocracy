@@ -1,10 +1,9 @@
 ﻿namespace Netocracy.Console.Business
 {
-    public class Inhabitant
+    public class Inhabitant2
     {
         public Individual Individual { get; set; }
         public int Index { get; set; }
-        public int MembershipNumber { get; set; }
-        public Tribe Tribe { get; set; }
+        public Tribe2 Tribe { get; set; }
     }
 }

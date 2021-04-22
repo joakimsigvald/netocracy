@@ -105,7 +105,7 @@ namespace Netocracy.Console.Business
             {
                 var tribe = new Tribe
                 {
-                    Name = $"{members[0].Id}-{members[1].Id}",
+                    Name = $"{members[0].Individual.Id}-{members[1].Individual.Id}",
                     Members = members.ToList(),
                     FoundingBond = GetFoundingBond(members)
                 };
@@ -117,9 +117,8 @@ namespace Netocracy.Console.Business
 
         private static Inhabitant ToInhabitant(Individual ind, int i) => new()
         { 
-            Id = ind.Id,
-            Index = i,
-            Peers = ind.Peers
+            Individual = ind,
+            Index = i
         };
 
         private static void SetMembership(Inhabitant member, Tribe tribe, int n)
