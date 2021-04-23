@@ -11,10 +11,10 @@ namespace Netocracy.Console.Business
 
         public async Task<Tribe[]> ComputeTribes(Individual[] individuals)
         {
-            var calibrated = individuals.Select(IndividualComputer.Calibrate).ToArray();
-            var relations = await _relationComputer.ComputeRelations(individuals);
-            var connections = ConnectionComputer.ComputeConnections(relations);
-            return TribeComputer.ComputeTribes(calibrated, connections);
+            //var calibrated = individuals.Select(IndividualComputer.Calibrate).ToArray();
+            //var relations = await _relationComputer.ComputeRelations(individuals);
+            //var connections = ConnectionComputer.ComputeConnections(relations);
+            return await Task.FromResult(TribeComputer2.ComputeTribes(individuals));
         }
     }
 }

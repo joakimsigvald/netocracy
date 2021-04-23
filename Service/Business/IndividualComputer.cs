@@ -64,8 +64,8 @@ namespace Netocracy.Console.Business
                 .Select(ind => (o: StocasticShift(n, ind.Index), i: ind.Index))
                 .OrderBy(t => t.o)
                 .ToArray();
-            var friends = stocasticPods.Take(friendCount).Select((_, i) => new Peer { Index = i, Trust = 1 });
-            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, i) => new Peer { Index = i, Trust = 1 });
+            var friends = stocasticPods.Take(friendCount).Select((_, i) => new Peer { Index = i, Trust = 1 }).ToArray();
+            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, i) => new Peer { Index = i, Trust = 1 }).ToArray();
             return friends.Concat(foes);
         }
 

@@ -4,15 +4,31 @@ using System.Linq;
 
 namespace Netocracy.Console.Business
 {
-    public class Tribe2 {
+    public class Tribe2
+    {
+        public static Tribe2[] Workbench;
+
         public Tribe2 Parent { get; set; }
         public string Name { get; set; }
         public Inhabitant2 Founder { get; set; }
         public float FoundingBond { get; set; }
         public Tribe2[] Children { get; set; } = Array.Empty<Tribe2>();
 
-        public IEnumerable<Tribe2> GetAncestors()
-            => (Parent is null ? Array.Empty<Tribe2>() : Parent.GetAncestors()).Append(this);
+        public Tribe2[] GetAncestors()
+        {
+            var next = this;
+            var i = 0;
+            do
+            {
+                Workbench[i] = next;
+                next = next.Parent;
+                i++;
+            } while (next != null);
+            var res = new Tribe2[i];
+            for (var j = i - 1; j >= 0; j--)
+                res[i - j - 1] = Workbench[j];
+            return res;
+        }
 
         public Tribe2 GetRoot() => Parent?.GetRoot() ?? this;
 

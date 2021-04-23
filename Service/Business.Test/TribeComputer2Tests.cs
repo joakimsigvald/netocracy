@@ -93,9 +93,9 @@ namespace Netocracy.Console.Business.Test
         [Fact]
         public void GivenTwoCouplesWhoAreMostlyEnemies_ReturnTwoTribes()
         {
-            var a = Create(1, 0, 1, 1, -1);
+            var a = Create(1, 0, 1, 0.9f, -1);
             var b = Create(2, 1, 0, -1, -1);
-            var c = Create(3, 1, -1, 0, 1);
+            var c = Create(3, 0.9f, -1, 0, 1);
             var d = Create(4, -1, -1, 1, 0);
 
             var tribes = TribeComputer2.ComputeTribes(a, b, c, d);
@@ -110,22 +110,26 @@ namespace Netocracy.Console.Business.Test
         }
 
         [Fact]
-        public void GivenTwoCouplesWhoAreFriendsExceptTwoWhoDislikeEachother_ReturnTwoTribes()
+        public void GivenSixIndividuals_ReturnTwoTribes()
         {
-            var a = Create(1, 0, 1, 1, -1);
-            var b = Create(2, 1, 0, 1, 1);
-            var c = Create(3, 1, 1, 0, 1);
-            var d = Create(4, -1, 1, 1, 0);
+            var a = Create(1, 0, 2, 0, 0, 0, -1);
+            var b = Create(2, 2, 0, 1, 0, 0, 0);
+            var c = Create(3, 0, 1, 0, 2, 0, 0);
+            var d = Create(4, 0, 0, 3, 0, 1, 0);
+            var e = Create(5, 0, 0, 0, 1, 0, 3);
+            var f = Create(6, -1, 0, 0, 0, 2, 0);
 
-            var tribes = TribeComputer2.ComputeTribes(a, b, c, d);
+            var tribes = TribeComputer2.ComputeTribes(a, b, c, d, e, f);
 
             Assert.Equal(2, tribes.Length);
             Assert.Equal(2, tribes[0].Members.Count);
-            Assert.Equal(2, tribes[1].Members.Count);
-            Assert.Equal(a, tribes[0].Members[0].Individual);
-            Assert.Equal(b, tribes[0].Members[1].Individual);
-            Assert.Equal(c, tribes[1].Members[0].Individual);
-            Assert.Equal(d, tribes[1].Members[1].Individual);
+            Assert.Equal(4, tribes[1].Members.Count);
+            Assert.Equal(e, tribes[0].Members[0].Individual);
+            Assert.Equal(f, tribes[0].Members[1].Individual);
+            Assert.Equal(a, tribes[1].Members[0].Individual);
+            Assert.Equal(b, tribes[1].Members[1].Individual);
+            Assert.Equal(c, tribes[1].Members[3].Individual);
+            Assert.Equal(d, tribes[1].Members[2].Individual);
         }
 
         private Individual Create(int id, params float[] trusts)
@@ -135,7 +139,7 @@ namespace Netocracy.Console.Business.Test
                 Peers = trusts
                 .Select((v, i) => (v, i))
                 .Where(t => t.v != 0)
-                .Select(t => new Peer { Index = t.i, Trust = t.v})
+                .Select(t => new Peer { Index = t.i, Trust = t.v })
                 .ToArray()
             };
     }

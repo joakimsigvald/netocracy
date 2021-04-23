@@ -21,18 +21,18 @@ namespace Netocracy.Console.Console
             stopwatch.Stop();
             System.Console.WriteLine($"Generating {count} individuals took {stopwatch.ElapsedMilliseconds} ms");
 
-            stopwatch.Restart();
-            var relations = await relationComputer.ComputeRelations(individuals);
-            stopwatch.Stop();
-            System.Console.WriteLine($"Computing relations took {stopwatch.ElapsedMilliseconds} ms");
+            //stopwatch.Restart();
+            //var relations = await relationComputer.ComputeRelations(individuals);
+            //stopwatch.Stop();
+            //System.Console.WriteLine($"Computing relations took {stopwatch.ElapsedMilliseconds} ms");
+
+            //stopwatch.Restart();
+            //var connections = ConnectionComputer.ComputeConnections(relations);
+            //stopwatch.Stop();
+            //System.Console.WriteLine($"Computing connections took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            var connections = ConnectionComputer.ComputeConnections(relations);
-            stopwatch.Stop();
-            System.Console.WriteLine($"Computing connections took {stopwatch.ElapsedMilliseconds} ms");
-
-            stopwatch.Restart();
-            var tribes = TribeComputer.ComputeTribes(individuals, connections);
+            var tribes = TribeComputer2.ComputeTribes(individuals);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating tribes took {stopwatch.ElapsedMilliseconds} ms");
             System.Console.WriteLine($"Generated {tribes.Length} tribes with sizes {string.Join(", ", tribes.Select(t => t.Members.Count))}");

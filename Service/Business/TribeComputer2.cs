@@ -8,6 +8,7 @@ namespace Netocracy.Console.Business
     {
         public static Tribe[] ComputeTribes(params Individual[] individuals)
         {
+            Tribe2.Workbench = new Tribe2[individuals.Length];
             var tribes = new Dictionary<string, Tribe2>();
             var calibrated = individuals.Select(IndividualComputer.Calibrate).ToArray();
             var inhabitants = calibrated
@@ -23,8 +24,8 @@ namespace Netocracy.Console.Business
                 var b = inhabitants[y];
                 var ta = a.Tribe ?? addTribe(a);
                 var tb = b.Tribe ?? addTribe(b);
-                var ancestorsA = ta.GetAncestors().ToArray();
-                var ancestorsB = tb.GetAncestors().ToArray();
+                var ancestorsA = ta.GetAncestors();
+                var ancestorsB = tb.GetAncestors();
                 var commonAncestor = GetCommon(ancestorsA, ancestorsB);
                 if (w > 0)
                     commonAncestor ??= mergeTribes(a, b);
@@ -85,9 +86,14 @@ namespace Netocracy.Console.Business
 
         private static Tribe2 GetCommon(Tribe2[] ancestorsA, Tribe2[] ancestorsB)
         {
-            var firstA = ancestorsA.FirstOrDefault();
-            var firstB = ancestorsB.FirstOrDefault();
-            return firstA != null && firstA == firstB ? (GetCommon(ancestorsA[1..], ancestorsB[1..]) ?? firstA) : null;
+            Tribe2 common = null;
+            var n = Math.Min(ancestorsA.Length, ancestorsB.Length);
+            for (var i = 0; i < n; i++) {
+                if (ancestorsA[i] != ancestorsB[i])
+                    return common;
+                common = ancestorsA[i];
+            }
+            return common;
         }
 
         private static IEnumerable<(int x, int y, float w)> GetTrust(Individual[] individuals)
