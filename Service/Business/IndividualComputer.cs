@@ -14,12 +14,11 @@ namespace Netocracy.Console.Business
                 var newInd = new Pod
                 {
                     Id = i + 1,
-                    Index = i,
                     Peers = GeneratePeers(pods, friends, foes).ToList()
                 };
                 foreach (var peer in newInd.Peers)
                 {
-                    pods[peer.Index].Peers.Add(new Peer { Index = newInd.Index, Trust = peer.Trust });
+                    pods[peer.TargetId - 1].Peers.Add(new Peer { TargetId = newInd.Id, Trust = peer.Trust });
                 }
                 pods.Add(newInd);
             }
@@ -51,7 +50,7 @@ namespace Netocracy.Console.Business
             IEnumerable<Peer> CalibrateTrust(IEnumerable<Peer> peers, float sumOfAbsoluteTrust)
                 => sumOfAbsoluteTrust == 1
                     ? peers
-                    : peers.Select(p => new Peer { Index = p.Index, Trust = p.Trust / sumOfAbsoluteTrust });
+                    : peers.Select(p => new Peer { TargetId = p.TargetId, Trust = p.Trust / sumOfAbsoluteTrust });
 
             static float[] MapAbsoluteTrust(IEnumerable<Peer> peers)
                 => peers.Select(p => Math.Abs(p.Trust)).ToArray();
@@ -61,11 +60,11 @@ namespace Netocracy.Console.Business
         {
             var n = pods.Count;
             var stocasticPods = pods
-                .Select(ind => (o: StocasticShift(n, ind.Index), i: ind.Index))
+                .Select(ind => (o: StocasticShift(n, ind.Id), i: ind.Id))
                 .OrderBy(t => t.o)
                 .ToArray();
-            var friends = stocasticPods.Take(friendCount).Select((_, i) => new Peer { Index = i, Trust = 1 }).ToArray();
-            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, i) => new Peer { Index = i, Trust = 1 }).ToArray();
+            var friends = stocasticPods.Take(friendCount).Select((_, id) => new Peer { TargetId = id, Trust = 1 }).ToArray();
+            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, id) => new Peer { TargetId = id, Trust = 1 }).ToArray();
             return friends.Concat(foes);
         }
 

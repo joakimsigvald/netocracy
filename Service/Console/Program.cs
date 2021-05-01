@@ -13,7 +13,6 @@ namespace Netocracy.Console.Console
             var count = GetArg(0, "count", args);
             var friends = GetArg(1, "friends", args);
             var foes = GetArg(2, "friends", args);
-            var relationComputer = new RelationComputer(10);
             var stopwatch = new Stopwatch();
             System.Console.WriteLine($"Generate {count} individuals with {friends} friends and {foes} foes each");
             stopwatch.Start();
@@ -32,10 +31,11 @@ namespace Netocracy.Console.Console
             //System.Console.WriteLine($"Computing connections took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            var tribes = TribeComputer2.ComputeTribes(individuals);
+            var service = new TribeService();
+            var tribes = await service.ComputeTribes(individuals);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating tribes took {stopwatch.ElapsedMilliseconds} ms");
-            System.Console.WriteLine($"Generated {tribes.Length} tribes with sizes {string.Join(", ", tribes.Select(t => t.Members.Count))}");
+            System.Console.WriteLine($"Generated {tribes.Length} tribes with sizes {string.Join(", ", tribes.Select(t => t.Members.Length))}");
         }
 
         private static int GetArg(int index, string name, string[] args)

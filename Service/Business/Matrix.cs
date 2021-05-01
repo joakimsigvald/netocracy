@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Netocracy.Console.Business
 {
-    public class Matrix
+    public class Matrix : IEquatable<Matrix>
     {
         private readonly float[][] _elements;
 
@@ -42,5 +42,21 @@ namespace Netocracy.Console.Business
                 for (var y = 0; y < Size; y++)
                     this[x, y] = 0;
         }
+
+        public bool Equals(Matrix other)
+        {
+            if (other == null) return false;
+            for (var x = 0; x < Size; x++)
+                for (var y = 0; y < Size; y++)
+                    if (this[x, y] != other[x, y])
+                        return false;
+            return true;
+        }
+
+        public override bool Equals(object obj)
+            => obj is Matrix m && Equals(m);
+
+        public override int GetHashCode()
+            => (int)_elements.Sum(row => row.Sum());
     }
 }

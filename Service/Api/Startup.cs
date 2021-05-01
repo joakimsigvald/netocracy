@@ -28,7 +28,6 @@ namespace Api
                     Version = "v1"
                 });
             });
-            services.AddTransient(_ => new RelationComputer(10));
             services.AddTransient<TribeService>();
         }
 

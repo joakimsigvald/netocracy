@@ -3,8 +3,8 @@
     public class Inhabitant
     {
         public Individual Individual { get; set; }
-        public int Index { get; set; }
-        public int MembershipNumber { get; set; }
+        public float Popularity { get; set; }
         public Tribe Tribe { get; set; }
+        public Peer[] SortedPeers { get; set; }
     }
 }
