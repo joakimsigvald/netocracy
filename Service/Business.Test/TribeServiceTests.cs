@@ -9,66 +9,212 @@ namespace Netocracy.Console.Business.Test
         [Fact]
         public async Task GivenNoIndividuals_GetNoTribes()
         {
-            var service = new TribeService();
-            var tribes = await service.ComputeTribes();
+            var tribes = await ComputeTribes();
             Assert.Empty(tribes);
         }
 
         [Fact]
         public async Task GivenOneIndividualWithNoFriends_GetNoTribes()
         {
-            var service = new TribeService();
             var individual = CreateIndividual(1);
-            var tribes = await service.ComputeTribes(individual);
+            var tribes = await ComputeTribes(individual);
             Assert.Empty(tribes);
         }
 
         [Fact]
         public async Task GivenOneIndividualWithUnknownFriend_GetNoTribes()
         {
-            var service = new TribeService();
             var individual = CreateIndividual(1, 2);
-            var tribes = await service.ComputeTribes(individual);
+            var tribes = await ComputeTribes(individual);
             Assert.Empty(tribes);
         }
 
         [Fact]
         public async Task GivenTwoIsolatedIndividuals_GetNoTribes()
         {
-            var service = new TribeService();
             var individuals = new[]
             {
                 CreateIndividual(1),
                 CreateIndividual(2)
             };
-            var tribes = await service.ComputeTribes(individuals);
+            var tribes = await ComputeTribes(individuals);
             Assert.Empty(tribes);
         }
 
         [Fact]
         public async Task GivenTwoConnectedIndividuals_GetOneTribe()
         {
-            var service = new TribeService();
             var individuals = new[]
             {
                 CreateIndividual(1, 2),
                 CreateIndividual(2, 1)
             };
 
-            var tribes = await service.ComputeTribes(individuals);
+            var tribes = await ComputeTribes(individuals);
 
             var tribe = Assert.Single(tribes);
             Assert.Equal("2-1", tribe.Id);
-            Assert.Equal(2, tribe.Members.Length);
-            Assert.Equal(individuals[1], tribe.Members[0].Individual);
-            Assert.Equal(individuals[0], tribe.Members[1].Individual);
+            AssertMembers(individuals, tribe, 1, 0);
+        }
+
+        [Fact]
+        public async Task SelfAppreciationIsIgnored()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 1, 2),
+                CreateIndividual(2, 1)
+            };
+
+            var tribes = await ComputeTribes(individuals);
+
+            var tribe = Assert.Single(tribes);
+            Assert.Equal("2-1", tribe.Id);
+            AssertMembers(individuals, tribe, 1, 0);
+        }
+
+        [Fact]
+        public async Task GivenTwoFoes_GetNoTribe()
+        {
+            var tribes = await ComputeTribes(new(1, new Peer(2, -1)), new(2, new Peer(1, -1)));
+
+            Assert.Empty(tribes);
+        }
+
+        [Fact]
+        public async Task GivenThreeConnectedIndividuals_GetOneTribe()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 2),
+                CreateIndividual(2, 1, 3),
+                CreateIndividual(3, 2),
+            };
+
+            var tribes = await ComputeTribes(individuals);
+
+            var tribe = Assert.Single(tribes);
+            Assert.Equal("2-3", tribe.Id);
+            AssertMembers(individuals, tribe, 1, 0, 2);
+        }
+
+        [Fact]
+        public async Task GivenFourCircularlyConnectedIndividuals_GetOneTribe()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 4, 2),
+                CreateIndividual(2, 1, 3),
+                CreateIndividual(3, 2, 4),
+                CreateIndividual(4, 3, 1),
+            };
+
+            var tribes = await ComputeTribes(individuals);
+
+            var tribe = Assert.Single(tribes);
+            Assert.Equal("4-2", tribe.Id);
+            AssertMembers(individuals, tribe, 3, 2, 1, 0);
+        }
+
+        [Fact]
+        public async Task GivenFourFriendsWithAModerateConflict_TheyStillFormOneTribe()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 2, 3, 4),
+                CreateIndividual(2, 1, 3, 4),
+                CreateIndividual(3, 1, 2, 4),
+                CreateIndividual(4, 1, 2, 3),
+            };
+            individuals[0].Peers[0].Trust = -1;
+
+            var tribes = await ComputeTribes(individuals);
+
+            var tribe = Assert.Single(tribes);
+            Assert.Equal("3-4", tribe.Id);
+            AssertMembers(individuals, tribe, 2, 0, 3, 1);
+        }
+
+        [Fact]
+        public async Task GivenFourFriendsWithASeriousConflict_TheyFormTwoTribes()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 2, 3, 4),
+                CreateIndividual(2, 1, 3, 4),
+                CreateIndividual(3, 1, 2, 4),
+                CreateIndividual(4, 1, 2, 3),
+            };
+            individuals[0].Peers[1].Trust = -1;
+            individuals[1].Peers[1].Trust = -1;
+            individuals[2].Peers[0].Trust = -1;
+            individuals[3].Peers[0].Trust = -1;
+
+            var tribes = await ComputeTribes(individuals);
+
+            Assert.Equal(2, tribes.Length);
+            var tribe1 = tribes[0];
+            var tribe2 = tribes[1];
+            Assert.Equal("2-1", tribe1.Id);
+            AssertMembers(individuals.Take(2).ToArray(), tribe1, 1, 0);
+            Assert.Equal("4-3", tribe2.Id);
+            AssertMembers(individuals.Skip(2).ToArray(), tribe2, 1, 0);
+        }
+
+        [Fact]
+        public async Task GivenFiveCircularlyConnectedIndividuals_GetOneTribe()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 5, 2),
+                CreateIndividual(2, 1, 3),
+                CreateIndividual(3, 2, 4),
+                CreateIndividual(4, 3, 5),
+                CreateIndividual(5, 4, 1),
+            };
+
+            var tribes = await ComputeTribes(individuals);
+
+            var tribe = Assert.Single(tribes);
+            Assert.Equal("5-3", tribe.Id);
+            AssertMembers(individuals, tribe, 4, 3, 2, 1, 0);
+        }
+
+        [Fact]
+        public async Task GivenTwoConnectedGroupsOfThree_GetTwoTribes()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 2, 3),
+                CreateIndividual(2, 1, 3),
+                CreateIndividual(3, 1, 2),
+                CreateIndividual(4, 5, 6),
+                CreateIndividual(5, 4, 6),
+                CreateIndividual(6, 4, 5),
+            };
+
+            var tribes = await ComputeTribes(individuals);
+
+            Assert.Equal(2, tribes.Length);
+            var tribe1 = tribes[0];
+            var tribe2 = tribes[1];
+            Assert.Equal("3-2", tribe1.Id);
+            AssertMembers(individuals.Take(3).ToArray(), tribe1, 2, 1, 0);
+            Assert.Equal("6-5", tribe2.Id);
+            AssertMembers(individuals.Skip(3).ToArray(), tribe2, 2, 1, 0);
+        }
+
+        private static Task<Tribe[]> ComputeTribes(params Individual[] individuals)
+            => new TribeService().ComputeTribes(individuals);
+
+        private static void AssertMembers(Individual[] individuals, Tribe tribe, params int[] order)
+        {
+            Assert.Equal(order.Length, tribe.Members.Length);
+            for (var i = 0; i < order.Length; i++)
+                Assert.Equal(individuals[order[i]].Id, tribe.Members[i].Id);
         }
 
         private static Individual CreateIndividual(int id, params int[] friends)
-            => new()
-            {
-                Id = id,
-                Peers = friends.Select(f => new Peer { TargetId = f, Trust = 1 }).ToArray()
-            };
+            => new(id, friends.Select(f => new Peer(f, 1)).ToArray());
     }
 }

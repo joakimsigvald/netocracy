@@ -4,65 +4,123 @@ using System.Threading.Tasks;
 
 namespace Netocracy.Console.Business
 {
+    //https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
     public class TribeService
     {
         public Task<Tribe[]> ComputeTribes(params Individual[] individuals)
         {
             var calibrated = individuals.Select(IndividualComputer.Calibrate).ToDictionary(ind => ind.Id);
-            var matchable = Gather(calibrated).ToDictionary(inh => inh.Individual.Id);
-            var tribes = new List<Tribe>();
-            foreach (var next in matchable.Values.OrderByDescending(p => p.Popularity))
+            var matchable = Gather(calibrated).ToDictionary(inh => inh.Id);
+            var nextPairs = new List<Pair>();
+            var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
+            var updated = true;
+            var reroute = new Dictionary<string, string>();
+            while (updated)
             {
-                var threshold = next.Individual.LowerMatchThreshold;
-                var match = next.SortedPeers
-                    .TakeWhile(p => p.Trust > threshold)
-                    .Select(p => matchable.TryGetValue(p.TargetId, out var val) ? val : null)
-                    .Where(p => p != null && CanMatchWith(p, next))
-                    .FirstOrDefault();
-                if (match != null)
+                updated = false;
+                var n = currentPairs.Count;
+                for (var i = 0; i < n; i++)
                 {
-                    var tribe = new Tribe
+                    var next = currentPairs[i];
+                    var threshold = next.LowerMatchThreshold;
+                    var match = next.SortedPeers
+                        .TakeWhile(p => p.Trust > threshold)
+                        .Select(p => matchable.TryGetValue(p.TargetId, out var val) ? val : null)
+                        .Where(p => p != null && CanMatchWith(p, next))
+                        .FirstOrDefault();
+                    if (match != null)
                     {
-                        Id = $"{next.Individual.Id}-{match.Individual.Id}",
-                        Members = new[] { next, match }
-                    };
-                    tribes.Add(tribe);
-                    next.Tribe = tribe;
-                    match.Tribe = tribe;
-                    matchable.Remove(next.Individual.Id);
-                    matchable.Remove(match.Individual.Id);
+                        updated = true;
+                        var pair = MergePairs(next, match);
+                        nextPairs.Add(pair);
+                        matchable.Remove(next.Id);
+                        matchable.Remove(match.Id);
+                        var indexOfMatch = currentPairs.IndexOf(match);
+                        if (indexOfMatch > i)
+                        {
+                            currentPairs.RemoveAt(indexOfMatch);
+                            n--;
+                        }
+                        reroute[match.Id] = pair.Id;
+                    }
                 }
+                matchable = matchable.Values.Concat(nextPairs).ToDictionary(p => p.Id);
+                foreach (var m in matchable.Values)
+                    m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
+                currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
+                nextPairs.Clear();
+                reroute.Clear();
             }
-            tribes.AddRange(matchable.Values.Select(p => new Tribe
-            {
-                Id = $"{p.Individual.Id}",
-                Members = new[] { p }
-            }));
-            return Task.FromResult(tribes.ToArray());
+            return Task.FromResult(GenerateTribes(currentPairs));
+
+            IEnumerable<SortedPeer> ReroutePeers(IEnumerable<SortedPeer> peers)
+                => peers
+                .GroupBy(p => reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId)
+                .Select(g => new SortedPeer { TargetId = g.Key, Trust = g.Sum(p => p.Trust) })
+                .OrderByDescending(p => p.Trust);
         }
 
-        private static bool CanMatchWith(Inhabitant subject, Inhabitant target)
+        private static Pair MergePairs(Pair left, Pair right)
+            => new()
+            {
+                Id = left.Id,
+                Left = left,
+                Right = right,
+                LowerMatchThreshold = (left.LowerMatchThreshold + right.LowerMatchThreshold) / 2,
+                UpperMatchThreshold = (left.UpperMatchThreshold + right.UpperMatchThreshold) / 2,
+                Popularity = MergePopularity(left, right),
+                SortedPeers = GetSorted(MergePeers(left, right))
+            };
+
+        private Tribe[] GenerateTribes(List<Pair> pairs)
+            => pairs.Where(p => p.Individual is null).Select(GenerateTribe).ToArray();
+
+        private Tribe GenerateTribe(Pair pair)
+            => new()
+            {
+                Id = $"{pair.Left.Id}-{pair.Right.Id}",
+                Members = pair.Members.ToArray()
+            };
+
+        private static IEnumerable<(string, float)> MergePeers(Pair next, Pair match)
+            => next.SortedPeers.Where(p => p.TargetId != match.Id)
+            .Concat(match.SortedPeers.Where(p => p.TargetId != next.Id))
+            .GroupBy(p => p.TargetId)
+            .Select(g => (g.Key, g.Sum(p => p.Trust)));
+
+        private static float MergePopularity(Pair a, Pair b)
+            => a.Popularity
+                + b.Popularity
+                - a.SortedPeers.Single(p => p.TargetId == b.Id).Trust
+                - b.SortedPeers.Single(p => p.TargetId == a.Id).Trust;
+
+        private static bool CanMatchWith(Pair subject, Pair target)
             => subject.SortedPeers
-            .TakeWhile(p => p.Trust > subject.Individual.UpperMatchThreshold)
-            .Any(p => p.TargetId == target.Individual.Id);
+            .TakeWhile(p => p.Trust > subject.UpperMatchThreshold)
+            .Any(p => p.TargetId == target.Id);
 
-        private IEnumerable<Inhabitant> Gather(Dictionary<int, Individual> calibrated)
+        private IEnumerable<Pair> Gather(Dictionary<int, Individual> calibrated)
         {
-
             return calibrated.Values
                 .SelectMany(ci => ci.Peers)
                 .GroupBy(p => p.TargetId)
-                .Select(CreateInhabitant)
+                .Select(CreatePair)
                 .Where(v => v != null);
 
-            Inhabitant CreateInhabitant(IGrouping<int, Peer> fans)
+            Pair CreatePair(IGrouping<int, Peer> fans)
                 => calibrated.TryGetValue(fans.Key, out var individual)
                     ? new()
                     {
+                        Id = $"{individual.Id}",
                         Individual = individual,
+                        LowerMatchThreshold = individual.LowerMatchThreshold,
+                        UpperMatchThreshold = individual.UpperMatchThreshold,
                         Popularity = fans.Sum(p => p.Trust),
-                        SortedPeers = individual.Peers.OrderBy(p => p.Trust).ToArray()
+                        SortedPeers = GetSorted(individual.Peers.Select(p => ($"{p.TargetId}", p.Trust)))
                     } : null;
         }
+
+        private static SortedPeer[] GetSorted(IEnumerable<(string to, float trust)> trusts)
+            => trusts.Select(t => new SortedPeer(t.to, t.trust)).OrderByDescending(p => p.Trust).ToArray();
     }
 }

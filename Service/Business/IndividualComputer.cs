@@ -25,34 +25,32 @@ namespace Netocracy.Console.Business
             return pods.Select(MapToIndividual).Select(Calibrate).ToArray();
         }
 
-        private static Individual MapToIndividual(Pod pod) => new()
-        {
-            Id = pod.Id,
-            Peers = pod.Peers.ToArray()
-        };
+        private static Individual MapToIndividual(Pod pod) => new(pod.Id, pod.Peers.ToArray());
 
         public static Individual Calibrate(Individual individual)
         {
-            return new Individual
-            {
-                Id = individual.Id,
-                Peers = Calibrate(individual.Peers).ToArray()
-            };
+            var peers = excludeSelf(individual.Peers);
+            return new (individual.Id, Calibrate().ToArray());
 
-            IEnumerable<Peer> Calibrate(IList<Peer> peers)
+            Peer[] excludeSelf(Peer[] peers)
+                => peers.Any(p => p.TargetId == individual.Id)
+                ? peers.Where(p => p.TargetId != individual.Id).ToArray()
+                : peers;
+
+            IEnumerable<Peer> Calibrate()
             {
                 if (!peers.Any())
                     return peers;
-                var sumOfAbsoluteTrust = MapAbsoluteTrust(peers).Sum();
-                return sumOfAbsoluteTrust > 0 ? CalibrateTrust(peers, sumOfAbsoluteTrust) : peers;
+                var sumOfAbsoluteTrust = MapAbsoluteTrust().Sum();
+                return sumOfAbsoluteTrust > 0 ? CalibrateTrust(sumOfAbsoluteTrust) : peers;
             }
 
-            IEnumerable<Peer> CalibrateTrust(IEnumerable<Peer> peers, float sumOfAbsoluteTrust)
+            IEnumerable<Peer> CalibrateTrust(float sumOfAbsoluteTrust)
                 => sumOfAbsoluteTrust == 1
                     ? peers
                     : peers.Select(p => new Peer { TargetId = p.TargetId, Trust = p.Trust / sumOfAbsoluteTrust });
 
-            static float[] MapAbsoluteTrust(IEnumerable<Peer> peers)
+            float[] MapAbsoluteTrust()
                 => peers.Select(p => Math.Abs(p.Trust)).ToArray();
         }
 
@@ -63,8 +61,8 @@ namespace Netocracy.Console.Business
                 .Select(ind => (o: StocasticShift(n, ind.Id), i: ind.Id))
                 .OrderBy(t => t.o)
                 .ToArray();
-            var friends = stocasticPods.Take(friendCount).Select((_, id) => new Peer { TargetId = id, Trust = 1 }).ToArray();
-            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, id) => new Peer { TargetId = id, Trust = 1 }).ToArray();
+            var friends = stocasticPods.Take(friendCount).Select((_, i) => new Peer { TargetId = i + 1, Trust = 1 }).ToArray();
+            var foes = stocasticPods.Skip(friendCount).Take(foeCount).Select((_, i) => new Peer { TargetId = i + 1, Trust = 1 }).ToArray();
             return friends.Concat(foes);
         }
 

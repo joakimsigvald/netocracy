@@ -5,6 +5,12 @@ namespace Netocracy.Console.Business
 {
     public class Individual : IEquatable<Individual>
     {
+        public Individual(int id, params Peer[] peers)
+        {
+            Id = id;
+            Peers = peers;
+        }
+
         public int Id { get; set; }
         public float LowerMatchThreshold { get; set; }
         public float UpperMatchThreshold { get; set; }
@@ -17,5 +23,7 @@ namespace Netocracy.Console.Business
             => obj is Individual ind && Equals(ind);
 
         public override int GetHashCode() => Id;
+
+        public override string ToString() => $"{Id}";
     }
 }
