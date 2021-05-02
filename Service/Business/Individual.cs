@@ -5,6 +5,10 @@ namespace Netocracy.Console.Business
 {
     public class Individual : IEquatable<Individual>
     {
+        public Individual()
+        {
+        }
+
         public Individual(int id, params Peer[] peers)
         {
             Id = id;
