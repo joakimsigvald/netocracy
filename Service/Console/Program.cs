@@ -19,17 +19,6 @@ namespace Netocracy.Console.Console
             var individuals = IndividualComputer.GenerateIndividuals(count, friends, foes);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating {count} individuals took {stopwatch.ElapsedMilliseconds} ms");
-
-            //stopwatch.Restart();
-            //var relations = await relationComputer.ComputeRelations(individuals);
-            //stopwatch.Stop();
-            //System.Console.WriteLine($"Computing relations took {stopwatch.ElapsedMilliseconds} ms");
-
-            //stopwatch.Restart();
-            //var connections = ConnectionComputer.ComputeConnections(relations);
-            //stopwatch.Stop();
-            //System.Console.WriteLine($"Computing connections took {stopwatch.ElapsedMilliseconds} ms");
-
             stopwatch.Restart();
             var service = new TribeService();
             var tribes = await service.ComputeTribes(individuals);
