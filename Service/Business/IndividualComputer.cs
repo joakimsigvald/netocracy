@@ -33,7 +33,7 @@ namespace Netocracy.Console.Business
                     .Select(t => t.i)
                     .ToArray();
                 var friendPeers = stocasticPods.Take(friends).Select(i => new Peer { TargetId = i, Trust = 1 }).ToArray();
-                var foePeers = stocasticPods.Skip(friends).Take(foes).Select((_, i) => new Peer { TargetId = i, Trust = 1 }).ToArray();
+                var foePeers = stocasticPods.Skip(friends).Take(foes).Select(i => new Peer { TargetId = i, Trust = -1 }).ToArray();
                 return friendPeers.Concat(foePeers);
             }
         }
