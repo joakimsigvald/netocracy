@@ -8,77 +8,72 @@ namespace Netocracy.Console.Business
     {
         public static Individual[] GenerateIndividuals(int count, int friends, int foes)
         {
-            var pods = new List<Pod>();
-            for (var i = 0; i < count; i++)
-            {
-                var newInd = new Pod
-                {
-                    Id = i,
-                    Peers = GeneratePeers().ToList()
-                };
-                foreach (var peer in newInd.Peers)
-                {
-                    pods[peer.TargetId].Peers.Add(new Peer { TargetId = newInd.Id, Trust = peer.Trust });
-                }
-                pods.Add(newInd);
-            }
-            return pods.Select(MapToIndividual).Select(Calibrate).ToArray();
+            var relations = Enumerable.Range(0, count)
+                .Select(i => GeneratePeers(i).ToList())
+                .ToArray();
+            for (var id = 1; id <= count; id++)
+                foreach (var peer in relations[id - 1])
+                    relations[peer.TargetId - 1].Add(new Peer { TargetId = id, Trust = peer.Trust });
+            return relations.Select(MapToIndividual).ToArray();
 
-            IEnumerable<Peer> GeneratePeers()
+            IEnumerable<Peer> GeneratePeers(int n)
             {
-                var n = pods.Count;
-                var stocasticPods = pods
-                    .Select(ind => (o: StocasticShift(n, ind.Id), i: ind.Id))
+                var n1 = Math.Min(friends, n);
+                var n2 = Math.Min(friends + foes, n);
+                var shifter = StocasticShifter(n);
+                var stocasticPods = Enumerable.Range(0, n)
+                    .Select(i => (o: shifter(i), i))
                     .OrderBy(t => t.o)
-                    .Select(t => t.i)
+                    .Select(t => t.i + 1)
                     .ToArray();
-                var friendPeers = stocasticPods.Take(friends).Select(i => new Peer { TargetId = i, Trust = 1 }).ToArray();
-                var foePeers = stocasticPods.Skip(friends).Take(foes).Select(i => new Peer { TargetId = i, Trust = -1 }).ToArray();
-                return friendPeers.Concat(foePeers);
+                for (var i = 0; i < n1; i++)
+                    yield return new Peer(stocasticPods[i], 1);
+                for (var i = n1; i < n2; i++)
+                    yield return new Peer(stocasticPods[i], -1);
             }
         }
 
-        private static Individual MapToIndividual(Pod pod) => new(pod.Id + 1, pod.Peers.Select(p => new Peer(p.TargetId + 1, p.Trust)).ToArray());
+        private static Individual MapToIndividual(IList<Peer> peers, int index) => new(index + 1, CalibratePeers(peers).ToArray());
 
         public static Individual Calibrate(Individual individual)
         {
             var peers = excludeSelf(individual.Peers);
-            return new (individual.Id, Calibrate().ToArray());
+            return new (individual.Id, CalibratePeers(peers).ToArray());
 
             Peer[] excludeSelf(Peer[] peers)
                 => peers.Any(p => p.TargetId == individual.Id)
                 ? peers.Where(p => p.TargetId != individual.Id).ToArray()
                 : peers;
-
-            IEnumerable<Peer> Calibrate()
-            {
-                if (!peers.Any())
-                    return peers;
-                var sumOfAbsoluteTrust = MapAbsoluteTrust().Sum();
-                return sumOfAbsoluteTrust > 0 ? CalibrateTrust(sumOfAbsoluteTrust) : peers;
-            }
-
-            IEnumerable<Peer> CalibrateTrust(float sumOfAbsoluteTrust)
-                => sumOfAbsoluteTrust == 1
-                    ? peers
-                    : peers.Select(p => new Peer { TargetId = p.TargetId, Trust = p.Trust / sumOfAbsoluteTrust });
-
-            float[] MapAbsoluteTrust()
-                => peers.Select(p => Math.Abs(p.Trust)).ToArray();
         }
 
-        public static int StocasticShift(int count, int number)
+        private static IEnumerable<Peer> CalibratePeers(IList<Peer> peers)
+        {
+            if (!peers.Any())
+                return peers;
+            var sumOfAbsoluteTrust = peers.Sum(p => Math.Abs(p.Trust));
+            return sumOfAbsoluteTrust > 0 && sumOfAbsoluteTrust != 1
+                ? CalibrateTrust(sumOfAbsoluteTrust)
+                : peers;
+
+            IEnumerable<Peer> CalibrateTrust(float sumOfAbsoluteTrust)
+                => peers.Select(p => new Peer(p.TargetId, p.Trust / sumOfAbsoluteTrust));
+        }
+
+        public static Func<int, int> StocasticShifter(int count)
         {
             var nBits = (int)Math.Ceiling(Math.Log2(count));
-            if (nBits < 2) return number;
-            if (nBits % 2 == 1) 
+            if (nBits < 2) return number => number;
+            if (nBits % 2 == 1)
                 nBits++;
-            var shifted = (number + 1) % count;
             var halfBits = nBits / 2;
             var mid = 1 << halfBits;
-            var lower = (shifted % mid) << halfBits;
-            var upper = shifted >> halfBits;
-            return lower + upper;
+            return number =>
+            {
+                var shifted = (number + 1) % count;
+                var lower = (shifted % mid) << halfBits;
+                var upper = shifted >> halfBits;
+                return lower + upper;
+            };
         }
     }
 }

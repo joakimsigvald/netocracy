@@ -64,7 +64,8 @@ namespace Netocracy.Console.Business.Test
         [InlineData(6, 5, 0)]
         public void TestStocasticShift(int count, int number, int expected)
         {
-            var actual = IndividualComputer.StocasticShift(count, number);
+            var shifter = IndividualComputer.StocasticShifter(count);
+            var actual = shifter(number);
             Assert.Equal(expected, actual);
         }
     }

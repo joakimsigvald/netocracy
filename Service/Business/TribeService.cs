@@ -52,7 +52,7 @@ namespace Netocracy.Console.Business
                 nextPairs.Clear();
                 reroute.Clear();
             }
-            return Task.FromResult(GenerateTribes(currentPairs));
+            return Task.FromResult(GenerateTribes(currentPairs, calibrated));
 
             IEnumerable<SortedPeer> ReroutePeers(IEnumerable<SortedPeer> peers)
                 => peers
@@ -73,15 +73,34 @@ namespace Netocracy.Console.Business
                 SortedPeers = GetSorted(MergePeers(left, right))
             };
 
-        private Tribe[] GenerateTribes(List<Pair> pairs)
-            => pairs.Where(p => p.Individual is null).Select(GenerateTribe).ToArray();
+        private Tribe[] GenerateTribes(List<Pair> pairs, IDictionary<int, Individual> calibrated)
+        {
+            return pairs.Where(p => p.Left != null).Select(GenerateTribe).ToArray();
 
-        private Tribe GenerateTribe(Pair pair)
-            => new()
+            Tribe GenerateTribe(Pair pair)
+                => new()
+                {
+                    Id = $"{pair.Left.Id}-{pair.Right.Id}",
+                    Members = CollectMembers(pair).ToArray()
+                };
+
+            IEnumerable<Individual> CollectMembers(Pair pair)
             {
-                Id = $"{pair.Left.Id}-{pair.Right.Id}",
-                Members = pair.Members.ToArray()
-            };
+                var stack = new Stack<Pair>(new[] { pair });
+                do
+                {
+                    pair = stack.Pop();
+                    if (pair.Left is null)
+                        yield return calibrated[pair.Id];
+                    else
+                    {
+                        stack.Push(pair.Right);
+                        stack.Push(pair.Left);
+                    }
+                }
+                while (stack.Any());
+            }
+        }
 
         private static IEnumerable<(int, float)> MergePeers(Pair next, Pair match)
             => next.SortedPeers.Where(p => p.TargetId != match.Id)
@@ -113,7 +132,6 @@ namespace Netocracy.Console.Business
                     ? new()
                     {
                         Id = individual.Id,
-                        Individual = individual,
                         LowerMatchThreshold = individual.LowerMatchThreshold,
                         UpperMatchThreshold = individual.UpperMatchThreshold,
                         Popularity = fans.Sum(p => p.Trust),
