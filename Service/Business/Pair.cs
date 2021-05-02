@@ -5,7 +5,7 @@ namespace Netocracy.Console.Business
 {
     public class Pair
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
         public Pair Left { get; set; }
         public Pair Right { get; set; }
         public Individual Individual { get; set; }

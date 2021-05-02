@@ -177,7 +177,7 @@ namespace Netocracy.Console.Business.Test
 
             var tribe = Assert.Single(tribes);
             Assert.Equal("5-3", tribe.Id);
-            AssertMembers(individuals, tribe, 4, 3, 2, 1, 0);
+            AssertMembers(individuals, tribe, 4, 3, 1, 0, 2);
         }
 
         [Fact]
@@ -198,10 +198,10 @@ namespace Netocracy.Console.Business.Test
             Assert.Equal(2, tribes.Length);
             var tribe1 = tribes[0];
             var tribe2 = tribes[1];
-            Assert.Equal("3-2", tribe1.Id);
-            AssertMembers(individuals.Take(3).ToArray(), tribe1, 2, 1, 0);
-            Assert.Equal("6-5", tribe2.Id);
-            AssertMembers(individuals.Skip(3).ToArray(), tribe2, 2, 1, 0);
+            Assert.Equal("2-3", tribe1.Id);
+            AssertMembers(individuals.Take(3).ToArray(), tribe1, 1, 0, 2);
+            Assert.Equal("5-6", tribe2.Id);
+            AssertMembers(individuals.Skip(3).ToArray(), tribe2, 1, 0, 2);
         }
 
         private static Task<Tribe[]> ComputeTribes(params Individual[] individuals)

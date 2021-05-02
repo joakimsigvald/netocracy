@@ -14,7 +14,7 @@ namespace Netocracy.Console.Business
             var nextPairs = new List<Pair>();
             var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
             var updated = true;
-            var reroute = new Dictionary<string, string>();
+            var reroute = new Dictionary<int, int>();
             while (updated)
             {
                 updated = false;
@@ -35,16 +35,17 @@ namespace Netocracy.Console.Business
                         nextPairs.Add(pair);
                         matchable.Remove(next.Id);
                         matchable.Remove(match.Id);
-                        var indexOfMatch = currentPairs.IndexOf(match);
-                        if (indexOfMatch > i)
-                        {
-                            currentPairs.RemoveAt(indexOfMatch);
-                            n--;
-                        }
+                        currentPairs.Remove(match);
+                        n--;
                         reroute[match.Id] = pair.Id;
                     }
+                    else
+                    {
+                        nextPairs.Add(next);
+                        matchable.Remove(next.Id);
+                    }
                 }
-                matchable = matchable.Values.Concat(nextPairs).ToDictionary(p => p.Id);
+                matchable = nextPairs.ToDictionary(p => p.Id);
                 foreach (var m in matchable.Values)
                     m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
                 currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
@@ -82,7 +83,7 @@ namespace Netocracy.Console.Business
                 Members = pair.Members.ToArray()
             };
 
-        private static IEnumerable<(string, float)> MergePeers(Pair next, Pair match)
+        private static IEnumerable<(int, float)> MergePeers(Pair next, Pair match)
             => next.SortedPeers.Where(p => p.TargetId != match.Id)
             .Concat(match.SortedPeers.Where(p => p.TargetId != next.Id))
             .GroupBy(p => p.TargetId)
@@ -111,16 +112,16 @@ namespace Netocracy.Console.Business
                 => calibrated.TryGetValue(fans.Key, out var individual)
                     ? new()
                     {
-                        Id = $"{individual.Id}",
+                        Id = individual.Id,
                         Individual = individual,
                         LowerMatchThreshold = individual.LowerMatchThreshold,
                         UpperMatchThreshold = individual.UpperMatchThreshold,
                         Popularity = fans.Sum(p => p.Trust),
-                        SortedPeers = GetSorted(individual.Peers.Select(p => ($"{p.TargetId}", p.Trust)))
+                        SortedPeers = GetSorted(individual.Peers.Select(p => (p.TargetId, p.Trust)))
                     } : null;
         }
 
-        private static SortedPeer[] GetSorted(IEnumerable<(string to, float trust)> trusts)
+        private static SortedPeer[] GetSorted(IEnumerable<(int to, float trust)> trusts)
             => trusts.Select(t => new SortedPeer(t.to, t.trust)).OrderByDescending(p => p.Trust).ToArray();
     }
 }
