@@ -6,7 +6,7 @@ namespace Netocracy.Console.Business
 {
     public static class IndividualComputer
     {
-        public static Individual[] GenerateIndividuals(int count, int friends, int foes)
+        public static Individual[] GenerateIndividuals(int count, int friends, int foes, int horizon)
         {
             var relations = Enumerable.Range(0, count)
                 .Select(i => GeneratePeers(i).ToList())
@@ -18,10 +18,12 @@ namespace Netocracy.Console.Business
 
             IEnumerable<Peer> GeneratePeers(int n)
             {
-                var n1 = Math.Min(friends, n);
-                var n2 = Math.Min(friends + foes, n);
+                var n0 = Math.Min(n, horizon);
+                var offset = n - n0;
+                var n1 = Math.Min(friends, n0);
+                var n2 = Math.Min(friends + foes, n0);
                 var shifter = StocasticShifter(n);
-                var stocasticPods = Enumerable.Range(0, n)
+                var stocasticPods = Enumerable.Range(offset, n0)
                     .Select(i => (o: shifter(i), i))
                     .OrderBy(t => t.o)
                     .Select(t => t.i + 1)
@@ -33,7 +35,14 @@ namespace Netocracy.Console.Business
             }
         }
 
-        private static Individual MapToIndividual(IList<Peer> peers, int index) => new(index + 1, CalibratePeers(peers).ToArray());
+        private static Individual MapToIndividual(List<Peer> peers, int index)
+        {
+            ScalePeers(peers, 1f / peers.Count);
+            return new(index + 1, peers.ToArray());
+        }
+
+        private static void ScalePeers(List<Peer> peers, float factor) 
+            => peers.ForEach(p => p.Trust *= factor);
 
         public static Individual Calibrate(Individual individual)
         {

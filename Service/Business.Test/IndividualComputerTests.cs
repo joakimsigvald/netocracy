@@ -5,20 +5,26 @@ namespace Netocracy.Console.Business.Test
 {
     public class IndividualComputerTests
     {
-
         [Theory]
-        [InlineData(1, 0, 0, "1:")]
-        [InlineData(2, 0, 0, "1:", "2:")]
-        [InlineData(2, 1, 0, "1:+2", "2:+1")]
-        [InlineData(2, 0, 1, "1:-2", "2:-1")]
-        [InlineData(3, 1, 0, "1:+2,+3", "2:+1", "3:+1")]
-        [InlineData(3, 1, 1, "1:+2,-3", "2:+1,-3", "3:+1,-2")]
-        [InlineData(4, 1, 0, "1:+2,+3", "2:+1", "3:+1,+4", "4:+3")]
-        [InlineData(5, 1, 0, "1:+2,+3", "2:+1", "3:+1,+4", "4:+3,+5", "5:+4")]
-        public void TestGenerate(int count, int friends, int foes, params string[] expected)
+        [InlineData(1, 0, 0, 10, "1:")]
+        [InlineData(2, 0, 0, 10, "1:", "2:")]
+        [InlineData(2, 1, 0, 10, "1:+2", "2:+1")]
+        [InlineData(2, 0, 1, 10, "1:-2", "2:-1")]
+        [InlineData(3, 1, 0, 10, "1:+2,+3", "2:+1", "3:+1")]
+        [InlineData(3, 1, 1, 10, "1:+2,-3", "2:+1,-3", "3:+1,-2")]
+        [InlineData(3, 1, 0, 1, "1:+2", "2:+1,+3", "3:+2")]
+        [InlineData(4, 1, 0, 10, "1:+2,+3", "2:+1", "3:+1,+4", "4:+3")]
+        [InlineData(4, 1, 0, 2, "1:+2,+3", "2:+1,+4", "3:+1", "4:+2")]
+        [InlineData(4, 1, 0, 1, "1:+2", "2:+1,+3", "3:+2,+4", "4:+3")]
+        [InlineData(5, 1, 0, 10, "1:+2,+3", "2:+1", "3:+1,+4", "4:+3,+5", "5:+4")]
+        [InlineData(5, 1, 0, 3, "1:+2,+3", "2:+1", "3:+1,+4,+5", "4:+3", "5:+3")]
+        [InlineData(5, 1, 0, 2, "1:+2,+3", "2:+1,+4", "3:+1,+5", "4:+2", "5:+3")]
+        [InlineData(5, 1, 0, 1, "1:+2", "2:+1,+3", "3:+2,+4", "4:+3,+5", "5:+4")]
+        [InlineData(6, 1, 0, 10, "1:+2,+3", "2:+1", "3:+1,+4", "4:+3,+5", "5:+4,+6", "6:+5")]
+        public void TestGenerate(int count, int friends, int foes, int horizon, params string[] expected)
         {
             var expectedIndividuals = expected.Select(ParseIndividual).ToArray();
-            var actual = IndividualComputer.GenerateIndividuals(count, friends, foes);
+            var actual = IndividualComputer.GenerateIndividuals(count, friends, foes, horizon);
             Assert.Equal(count, actual.Length);
             for (var i = 0; i < count; i++)
             {

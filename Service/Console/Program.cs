@@ -13,10 +13,11 @@ namespace Netocracy.Console.Console
             var count = GetArg(0, "count", args);
             var friends = GetArg(1, "friends", args);
             var foes = GetArg(2, "friends", args);
+            var horizon = GetArg(3, "horizon", args);
             var stopwatch = new Stopwatch();
             System.Console.WriteLine($"Generate {count} individuals with {friends} friends and {foes} foes each");
             stopwatch.Start();
-            var individuals = IndividualComputer.GenerateIndividuals(count, friends, foes);
+            var individuals = IndividualComputer.GenerateIndividuals(count, friends, foes, horizon);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating {count} individuals took {stopwatch.ElapsedMilliseconds} ms");
             stopwatch.Restart();

@@ -11,48 +11,48 @@ namespace Netocracy.Console.Business
         {
             var calibrated = individuals.Select(IndividualComputer.Calibrate).ToDictionary(ind => ind.Id);
             var matchable = Gather(calibrated).ToDictionary(inh => inh.Id);
-            var nextPairs = new List<Pair>();
-            var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
-            var updated = true;
-            var reroute = new Dictionary<int, int>();
-            while (updated)
+            var lastCount = 0;
+            do
             {
-                updated = false;
-                var n = currentPairs.Count;
-                for (var i = 0; i < n; i++)
-                {
-                    var next = currentPairs[i];
-                    var threshold = next.LowerMatchThreshold;
-                    var match = next.SortedPeers
-                        .TakeWhile(p => p.Trust > threshold)
-                        .Select(p => matchable.TryGetValue(p.TargetId, out var val) ? val : null)
-                        .Where(p => p != null && CanMatchWith(p, next))
-                        .FirstOrDefault();
-                    if (match != null)
-                    {
-                        updated = true;
-                        var pair = MergePairs(next, match);
-                        nextPairs.Add(pair);
-                        matchable.Remove(next.Id);
-                        matchable.Remove(match.Id);
-                        currentPairs.Remove(match);
-                        n--;
-                        reroute[match.Id] = pair.Id;
-                    }
-                    else
-                    {
-                        nextPairs.Add(next);
-                        matchable.Remove(next.Id);
-                    }
-                }
-                matchable = nextPairs.ToDictionary(p => p.Id);
-                foreach (var m in matchable.Values)
-                    m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
-                currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
-                nextPairs.Clear();
-                reroute.Clear();
+                lastCount = matchable.Count;
+                matchable = GeneratePairs(matchable);
             }
-            return Task.FromResult(GenerateTribes(currentPairs, calibrated));
+            while (lastCount > matchable.Count);
+            return Task.FromResult(GenerateTribes(matchable.Values, calibrated));
+        }
+
+        private static Dictionary<int, Pair> GeneratePairs(Dictionary<int, Pair> matchable)
+        {
+            var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
+            var reroute = new Dictionary<int, int>();
+            var nextPairs = new List<Pair>();
+            var n = currentPairs.Count;
+            for (var i = 0; i < n; i++)
+            {
+                var next = currentPairs[i];
+                var threshold = next.LowerMatchThreshold;
+                var match = next.SortedPeers
+                    .TakeWhile(p => p.Trust > threshold)
+                    .Select(p => matchable.TryGetValue(p.TargetId, out var val) ? val : null)
+                    .Where(p => p != null && CanMatchWith(p, next))
+                    .FirstOrDefault();
+                if (match != null)
+                {
+                    var pair = MergePairs(next, match);
+                    nextPairs.Add(pair);
+                    matchable.Remove(match.Id);
+                    currentPairs.Remove(match);
+                    n--;
+                    reroute[match.Id] = pair.Id;
+                }
+                else
+                    nextPairs.Add(next);
+                matchable.Remove(next.Id);
+            }
+            matchable = nextPairs.ToDictionary(p => p.Id);
+            foreach (var m in matchable.Values)
+                m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
+            return matchable;
 
             IEnumerable<SortedPeer> ReroutePeers(IEnumerable<SortedPeer> peers)
                 => peers
@@ -72,35 +72,6 @@ namespace Netocracy.Console.Business
                 Popularity = MergePopularity(left, right),
                 SortedPeers = GetSorted(MergePeers(left, right))
             };
-
-        private Tribe[] GenerateTribes(List<Pair> pairs, IDictionary<int, Individual> calibrated)
-        {
-            return pairs.Where(p => p.Left != null).Select(GenerateTribe).ToArray();
-
-            Tribe GenerateTribe(Pair pair)
-                => new()
-                {
-                    Id = $"{pair.Left.Id}-{pair.Right.Id}",
-                    Members = CollectMembers(pair).ToArray()
-                };
-
-            IEnumerable<Individual> CollectMembers(Pair pair)
-            {
-                var stack = new Stack<Pair>(new[] { pair });
-                do
-                {
-                    pair = stack.Pop();
-                    if (pair.Left is null)
-                        yield return calibrated[pair.Id];
-                    else
-                    {
-                        stack.Push(pair.Right);
-                        stack.Push(pair.Left);
-                    }
-                }
-                while (stack.Any());
-            }
-        }
 
         private static IEnumerable<(int, float)> MergePeers(Pair next, Pair match)
             => next.SortedPeers.Where(p => p.TargetId != match.Id)
@@ -140,6 +111,35 @@ namespace Netocracy.Console.Business
         }
 
         private static SortedPeer[] GetSorted(IEnumerable<(int to, float trust)> trusts)
-            => trusts.Select(t => new SortedPeer(t.to, t.trust)).OrderByDescending(p => p.Trust).ToArray();
+            => trusts.OrderByDescending(p => p.trust).Select(t => new SortedPeer(t.to, t.trust)).ToArray();
+
+        private Tribe[] GenerateTribes(IEnumerable<Pair> pairs, IDictionary<int, Individual> calibrated)
+        {
+            return pairs.Where(p => p.Left != null).Select(GenerateTribe).ToArray();
+
+            Tribe GenerateTribe(Pair pair)
+                => new()
+                {
+                    Id = $"{pair.Left.Id}-{pair.Right.Id}",
+                    Members = CollectMembers(pair).ToArray()
+                };
+
+            IEnumerable<Individual> CollectMembers(Pair pair)
+            {
+                var stack = new Stack<Pair>(new[] { pair });
+                do
+                {
+                    pair = stack.Pop();
+                    if (pair.Left is null)
+                        yield return calibrated[pair.Id];
+                    else
+                    {
+                        stack.Push(pair.Right);
+                        stack.Push(pair.Left);
+                    }
+                }
+                while (stack.Any());
+            }
+        }
     }
 }
