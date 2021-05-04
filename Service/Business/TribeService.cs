@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,13 +24,14 @@ namespace Netocracy.Console.Business
 
         private static Dictionary<int, Pair> GeneratePairs(Dictionary<int, Pair> matchable)
         {
-            var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToList();
+            var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToArray();
             var reroute = new Dictionary<int, int>();
             var nextPairs = new List<Pair>();
-            var n = currentPairs.Count;
+            var n = currentPairs.Length;
             for (var i = 0; i < n; i++)
             {
                 var next = currentPairs[i];
+                if (next == null) continue;
                 var threshold = next.LowerMatchThreshold;
                 var match = next.SortedPeers
                     .TakeWhile(p => p.Trust > threshold)
@@ -41,8 +43,8 @@ namespace Netocracy.Console.Business
                     var pair = MergePairs(next, match);
                     nextPairs.Add(pair);
                     matchable.Remove(match.Id);
-                    currentPairs.Remove(match);
-                    n--;
+                    var matchIndex = Array.IndexOf(currentPairs, match);
+                    currentPairs[matchIndex] = null;
                     reroute[match.Id] = pair.Id;
                 }
                 else
