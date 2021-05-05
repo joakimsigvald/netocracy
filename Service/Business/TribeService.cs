@@ -46,10 +46,10 @@ namespace Netocracy.Console.Business
                 m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
             return matchable;
 
-            IEnumerable<SortedPeer> ReroutePeers(IEnumerable<SortedPeer> peers)
+            IEnumerable<Peer> ReroutePeers(IEnumerable<Peer> peers)
                     => peers
                     .GroupBy(p => reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId)
-                    .Select(g => new SortedPeer { TargetId = g.Key, Trust = g.Sum(p => p.Trust) })
+                    .Select(g => new Peer { TargetId = g.Key, Trust = g.Sum(p => p.Trust) })
                     .OrderByDescending(p => p.Trust);
         }
 
@@ -66,7 +66,7 @@ namespace Netocracy.Console.Business
             }
             return default;
 
-            (Pair bride, float trust) ProposeTo(SortedPeer candidate)
+            (Pair bride, float trust) ProposeTo(Peer candidate)
             {
                 if (!matchable.TryGetValue(candidate.TargetId, out var bride)) return default;
                 var upperThreshold = bride.UpperMatchThreshold;
@@ -94,10 +94,10 @@ namespace Netocracy.Console.Business
             left.SortedPeers = MergePeers(left, right);
         }
 
-        private static SortedPeer[] MergePeers(Pair next, Pair match)
+        private static Peer[] MergePeers(Pair next, Pair match)
         {
             var dict = next.SortedPeers.Where(sp => sp.TargetId != match.Id).ToDictionary(sp => sp.TargetId);
-            var rest = new List<SortedPeer>();
+            var rest = new List<Peer>();
             foreach (var sp in match.SortedPeers)
             {
                 if (sp.TargetId == next.Id)
@@ -126,12 +126,12 @@ namespace Netocracy.Console.Business
                         LowerMatchThreshold = individual.LowerMatchThreshold,
                         UpperMatchThreshold = individual.UpperMatchThreshold,
                         Popularity = fans.Sum(p => p.Trust),
-                        SortedPeers = GetSorted(individual.Peers.Select(p => (p.TargetId, p.Trust)))
+                        SortedPeers = GetSorted(individual.Peers)
                     } : null;
         }
 
-        private static SortedPeer[] GetSorted(IEnumerable<(int to, float trust)> trusts)
-            => trusts.OrderByDescending(p => p.trust).Select(t => new SortedPeer(t.to, t.trust)).ToArray();
+        private static Peer[] GetSorted(Peer[] peers)
+            => peers.OrderByDescending(p => p.Trust).ToArray();
 
         private Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
         {

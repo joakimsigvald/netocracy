@@ -7,7 +7,7 @@
         public Individual[] Individuals { get; set; }
         public float LowerMatchThreshold { get; set; }
         public float UpperMatchThreshold { get; set; }
-        public SortedPeer[] SortedPeers { get; set; }
+        public Peer[] SortedPeers { get; set; }
         public float Popularity { get; set; }
     }
 }
