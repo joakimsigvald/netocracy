@@ -10,7 +10,7 @@ namespace Netocracy.Console.Business
     {
         public Task<Tribe[]> ComputeTribes(params Individual[] individuals)
         {
-            var calibrated = individuals.Select(IndividualComputer.Calibrate).ToDictionary(ind => ind.Id);
+            var calibrated = individuals.ToDictionary(ind => ind.Id);
             var matchable = Gather(calibrated).ToDictionary(inh => inh.Id);
             var lastCount = 0;
             do
@@ -91,14 +91,23 @@ namespace Netocracy.Console.Business
             left.LowerMatchThreshold = (left.LowerMatchThreshold + right.LowerMatchThreshold) / 2;
             left.UpperMatchThreshold = (left.UpperMatchThreshold + right.UpperMatchThreshold) / 2;
             left.Popularity = left.Popularity + right.Popularity - mutualTrust;
-            left.SortedPeers = GetSorted(MergePeers(left, right));
+            left.SortedPeers = MergePeers(left, right);
         }
 
-        private static IEnumerable<(int, float)> MergePeers(Pair next, Pair match)
-            => next.SortedPeers.Where(p => p.TargetId != match.Id)
-            .Concat(match.SortedPeers.Where(p => p.TargetId != next.Id))
-            .GroupBy(p => p.TargetId)
-            .Select(g => (g.Key, g.Sum(p => p.Trust)));
+        private static SortedPeer[] MergePeers(Pair next, Pair match)
+        {
+            var dict = next.SortedPeers.Where(sp => sp.TargetId != match.Id).ToDictionary(sp => sp.TargetId);
+            var rest = new List<SortedPeer>();
+            foreach (var sp in match.SortedPeers)
+            {
+                if (sp.TargetId == next.Id)
+                    continue;
+                if (dict.TryGetValue(sp.TargetId, out var val))
+                    val.Trust += sp.Trust;
+                else rest.Add(sp);
+            }
+            return dict.Values.Concat(rest).OrderByDescending(p => p.Trust).ToArray();
+        }
 
         private IEnumerable<Pair> Gather(Dictionary<int, Individual> calibrated)
         {

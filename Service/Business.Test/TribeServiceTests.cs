@@ -58,22 +58,6 @@ namespace Netocracy.Console.Business.Test
         }
 
         [Fact]
-        public async Task SelfAppreciationIsIgnored()
-        {
-            var individuals = new[]
-            {
-                CreateIndividual(1, 1, 2),
-                CreateIndividual(2, 1)
-            };
-
-            var tribes = await ComputeTribes(individuals);
-
-            var tribe = Assert.Single(tribes);
-            Assert.Equal("2-1", tribe.Id);
-            AssertMembers(individuals, tribe, 1, 0);
-        }
-
-        [Fact]
         public async Task GivenTwoFoes_GetNoTribe()
         {
             var tribes = await ComputeTribes(new(1, new Peer(2, -1)), new(2, new Peer(1, -1)));
@@ -215,6 +199,6 @@ namespace Netocracy.Console.Business.Test
         }
 
         private static Individual CreateIndividual(int id, params int[] friends)
-            => new(id, friends.Select(f => new Peer(f, 1)).ToArray());
+            => new(id, friends.Select(f => new Peer(f, 1f / friends.Length)).ToArray());
     }
 }
