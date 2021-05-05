@@ -1,6 +1,8 @@
-﻿namespace Netocracy.Console.Business
+﻿using System;
+
+namespace Netocracy.Console.Business
 {
-    public struct Peer
+    public struct Peer : IComparable<Peer>
     {
         public Peer(int targetId, float trust)
         {
@@ -10,5 +12,7 @@
 
         public int TargetId { get; set; }
         public float Trust { get; set; }
+
+        public int CompareTo(Peer other) => other.Trust.CompareTo(Trust);
     }
 }

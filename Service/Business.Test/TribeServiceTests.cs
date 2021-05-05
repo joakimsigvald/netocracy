@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -16,7 +17,7 @@ namespace Netocracy.Console.Business.Test
         [Fact]
         public async Task GivenOneIndividualWithNoFriends_GetNoTribes()
         {
-            var individual = CreateIndividual(1);
+            var individual = CreateIndividual(1, Array.Empty<int>());
             var tribes = await ComputeTribes(individual);
             Assert.Empty(tribes);
         }
@@ -34,8 +35,8 @@ namespace Netocracy.Console.Business.Test
         {
             var individuals = new[]
             {
-                CreateIndividual(1),
-                CreateIndividual(2)
+                CreateIndividual(1, Array.Empty<int>()),
+                CreateIndividual(2, Array.Empty<int>())
             };
             var tribes = await ComputeTribes(individuals);
             Assert.Empty(tribes);
@@ -146,6 +147,24 @@ namespace Netocracy.Console.Business.Test
         }
 
         [Fact]
+        public async Task GivenDifferentTrust_ChooseMoreTrustedPeerFirst() {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 0f, 0.2f, 0.5f, 0.3f),
+                CreateIndividual(2, 0.2f, 0f, 0.5f, 0.3f),
+                CreateIndividual(3, 0.2f, 0.5f, 0f, 0.3f),
+                CreateIndividual(4, 0.2f, 0.5f, 0.3f, 0f),
+            };
+
+            var tribes = await ComputeTribes(individuals);
+
+            var tribe = Assert.Single(tribes);
+            Assert.Equal("3-2", tribe.Id);
+            AssertMembers(individuals, tribe, 2, 1, 3, 0);
+            Assert.Equal(0, tribe.Admiration);
+        }
+
+        [Fact]
         public async Task GivenFiveCircularlyConnectedIndividuals_GetOneTribe()
         {
             var individuals = new[]
@@ -200,5 +219,8 @@ namespace Netocracy.Console.Business.Test
 
         private static Individual CreateIndividual(int id, params int[] friends)
             => new(id, friends.Select(f => new Peer(f, 1f / friends.Length)).ToArray());
+
+        private static Individual CreateIndividual(int id, params float[] trusts)
+            => new(id, trusts.Select((t, i) => new Peer(i + 1, t)).Where(p => p.TargetId != id).ToArray());
     }
 }

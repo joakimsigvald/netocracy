@@ -43,14 +43,21 @@ namespace Netocracy.Console.Business
             }
             matchable = currentPairs.Where(p => !p.IsMatched).ToDictionary(p => p.Id);
             foreach (var m in matchable.Values)
-                m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
+                m.SortedPeers = ReroutePeers(m.SortedPeers, reroute);
             return matchable;
+        }
 
-            IEnumerable<Peer> ReroutePeers(IEnumerable<Peer> peers)
-                    => peers
-                    .GroupBy(p => reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId)
-                    .Select(g => new Peer { TargetId = g.Key, Trust = g.Sum(p => p.Trust) })
-                    .OrderByDescending(p => p.Trust);
+        private static Peer[] ReroutePeers(Peer[] peers, Dictionary<int, int> reroute)
+        {
+            var dict = new Dictionary<int, float>();
+            foreach (var p in peers)
+            {
+                var newTargetId = reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId;
+                dict[newTargetId] = dict.TryGetValue(newTargetId, out var val) ? val + p.Trust : p.Trust;
+            }
+            var mergedPeers = dict.Select(t => new Peer(t.Key, t.Value)).ToArray();
+            Array.Sort(mergedPeers);
+            return mergedPeers;
         }
 
         private static (Pair gallant, Pair bride, float mutualTrust) FindMatch(Pair gallant, Dictionary<int, Pair> matchable)
@@ -96,17 +103,13 @@ namespace Netocracy.Console.Business
 
         private static Peer[] MergePeers(Pair next, Pair match)
         {
-            var dict = next.SortedPeers.Where(sp => sp.TargetId != match.Id).ToDictionary(sp => sp.TargetId);
-            var rest = new List<Peer>();
-            foreach (var sp in match.SortedPeers)
-            {
-                if (sp.TargetId == next.Id)
-                    continue;
-                if (dict.TryGetValue(sp.TargetId, out var val))
-                    val.Trust += sp.Trust;
-                else rest.Add(sp);
-            }
-            return dict.Values.Concat(rest).OrderByDescending(p => p.Trust).ToArray();
+            var dict = new Dictionary<int, float>();
+            foreach (var p in next.SortedPeers.Where(p => p.TargetId != match.Id)
+                .Concat(match.SortedPeers.Where(p => p.TargetId != next.Id)))
+                dict[p.TargetId] = dict.TryGetValue(p.TargetId, out var val) ? val + p.Trust : p.Trust;
+            var mergedPeers = dict.Select(t => new Peer(t.Key, t.Value)).ToArray();
+            Array.Sort(mergedPeers);
+            return mergedPeers;
         }
 
         private IEnumerable<Pair> Gather(Dictionary<int, Individual> calibrated)
@@ -131,13 +134,16 @@ namespace Netocracy.Console.Business
         }
 
         private static Peer[] GetSorted(Peer[] peers)
-            => peers.OrderByDescending(p => p.Trust).ToArray();
+        {
+            Array.Sort(peers);
+            return peers;
+        }
 
         private Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
         {
             return pairs.Where(p => p.Individuals.Length > 1).Select(GenerateTribe).ToArray();
 
-            Tribe GenerateTribe(Pair pair)
+            static Tribe GenerateTribe(Pair pair)
                 => new()
                 {
                     Id = $"{pair.Individuals[0].Id}-{pair.Individuals[1].Id}",
