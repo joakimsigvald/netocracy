@@ -94,7 +94,7 @@ namespace Netocracy.Console.Business.Test
             var tribes = await ComputeTribes(individuals);
 
             var tribe = Assert.Single(tribes);
-            Assert.Equal("2-3", tribe.Id);
+            Assert.Equal("2-1", tribe.Id);
             AssertMembers(individuals, tribe, 1, 0, 2);
         }
 
@@ -112,7 +112,7 @@ namespace Netocracy.Console.Business.Test
             var tribes = await ComputeTribes(individuals);
 
             var tribe = Assert.Single(tribes);
-            Assert.Equal("4-2", tribe.Id);
+            Assert.Equal("4-3", tribe.Id);
             AssertMembers(individuals, tribe, 3, 2, 1, 0);
         }
 
@@ -131,7 +131,7 @@ namespace Netocracy.Console.Business.Test
             var tribes = await ComputeTribes(individuals);
 
             var tribe = Assert.Single(tribes);
-            Assert.Equal("3-4", tribe.Id);
+            Assert.Equal("3-1", tribe.Id);
             AssertMembers(individuals, tribe, 2, 0, 3, 1);
         }
 
@@ -176,7 +176,7 @@ namespace Netocracy.Console.Business.Test
             var tribes = await ComputeTribes(individuals);
 
             var tribe = Assert.Single(tribes);
-            Assert.Equal("5-3", tribe.Id);
+            Assert.Equal("5-4", tribe.Id);
             AssertMembers(individuals, tribe, 4, 3, 1, 0, 2);
         }
 
@@ -198,9 +198,9 @@ namespace Netocracy.Console.Business.Test
             Assert.Equal(2, tribes.Length);
             var tribe1 = tribes[0];
             var tribe2 = tribes[1];
-            Assert.Equal("2-3", tribe1.Id);
+            Assert.Equal("2-1", tribe1.Id);
             AssertMembers(individuals.Take(3).ToArray(), tribe1, 1, 0, 2);
-            Assert.Equal("5-6", tribe2.Id);
+            Assert.Equal("5-4", tribe2.Id);
             AssertMembers(individuals.Skip(3).ToArray(), tribe2, 1, 0, 2);
         }
 

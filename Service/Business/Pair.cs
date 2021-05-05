@@ -3,8 +3,8 @@
     public class Pair
     {
         public int Id { get; set; }
-        public Pair Left { get; set; }
-        public Pair Right { get; set; }
+        public bool IsMatched { get; set; }
+        public Individual[] Individuals { get; set; }
         public float LowerMatchThreshold { get; set; }
         public float UpperMatchThreshold { get; set; }
         public SortedPeer[] SortedPeers { get; set; }

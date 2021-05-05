@@ -19,78 +19,86 @@ namespace Netocracy.Console.Business
                 matchable = GeneratePairs(matchable);
             }
             while (lastCount > matchable.Count);
-            return Task.FromResult(GenerateTribes(matchable.Values, calibrated));
+            return Task.FromResult(GenerateTribes(matchable.Values));
         }
 
         private static Dictionary<int, Pair> GeneratePairs(Dictionary<int, Pair> matchable)
         {
             var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToArray();
             var reroute = new Dictionary<int, int>();
-            var nextPairs = new List<Pair>();
             var n = currentPairs.Length;
             for (var i = 0; i < n; i++)
             {
                 var next = currentPairs[i];
-                if (next == null) continue;
-                var threshold = next.LowerMatchThreshold;
-                var match = next.SortedPeers
-                    .TakeWhile(p => p.Trust > threshold)
-                    .Select(p => matchable.TryGetValue(p.TargetId, out var val) ? val : null)
-                    .Where(p => p != null && CanMatchWith(p, next))
-                    .FirstOrDefault();
-                if (match != null)
+                if (next.IsMatched) continue;
+                var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
+                if (bride != null)
                 {
-                    var pair = MergePairs(next, match);
-                    nextPairs.Add(pair);
-                    matchable.Remove(match.Id);
-                    var matchIndex = Array.IndexOf(currentPairs, match);
-                    currentPairs[matchIndex] = null;
-                    reroute[match.Id] = pair.Id;
+                    MergePairs(gallant, bride, mutualTrust);
+                    reroute[bride.Id] = next.Id;
+                    matchable.Remove(bride.Id);
+                    bride.IsMatched = true;
                 }
-                else
-                    nextPairs.Add(next);
                 matchable.Remove(next.Id);
             }
-            matchable = nextPairs.ToDictionary(p => p.Id);
+            matchable = currentPairs.Where(p => !p.IsMatched).ToDictionary(p => p.Id);
             foreach (var m in matchable.Values)
                 m.SortedPeers = ReroutePeers(m.SortedPeers).ToArray();
             return matchable;
 
             IEnumerable<SortedPeer> ReroutePeers(IEnumerable<SortedPeer> peers)
-                => peers
-                .GroupBy(p => reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId)
-                .Select(g => new SortedPeer { TargetId = g.Key, Trust = g.Sum(p => p.Trust) })
-                .OrderByDescending(p => p.Trust);
+                    => peers
+                    .GroupBy(p => reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId)
+                    .Select(g => new SortedPeer { TargetId = g.Key, Trust = g.Sum(p => p.Trust) })
+                    .OrderByDescending(p => p.Trust);
         }
 
-        private static Pair MergePairs(Pair left, Pair right)
-            => new()
+        private static (Pair gallant, Pair bride, float mutualTrust) FindMatch(Pair gallant, Dictionary<int, Pair> matchable)
+        {
+            var lowerThreshold = gallant.LowerMatchThreshold;
+            foreach (var candidate in gallant.SortedPeers)
             {
-                Id = left.Id,
-                Left = left,
-                Right = right,
-                LowerMatchThreshold = (left.LowerMatchThreshold + right.LowerMatchThreshold) / 2,
-                UpperMatchThreshold = (left.UpperMatchThreshold + right.UpperMatchThreshold) / 2,
-                Popularity = MergePopularity(left, right),
-                SortedPeers = GetSorted(MergePeers(left, right))
-            };
+                if (candidate.Trust <= lowerThreshold)
+                    return default;
+                var (bride, trust) = ProposeTo(candidate);
+                if (bride != null)
+                    return (gallant, bride, candidate.Trust + trust);
+            }
+            return default;
+
+            (Pair bride, float trust) ProposeTo(SortedPeer candidate)
+            {
+                if (!matchable.TryGetValue(candidate.TargetId, out var bride)) return default;
+                var upperThreshold = bride.UpperMatchThreshold;
+                foreach (var mutualTrust in bride.SortedPeers)
+                {
+                    var mutual = mutualTrust.Trust;
+                    if (mutualTrust.TargetId == gallant.Id)
+                        return mutual > upperThreshold ? (bride, mutual) : default;
+                    else if (mutual <= upperThreshold)
+                        return default;
+                }
+                return default;
+            }
+        }
+
+        private static void MergePairs(Pair left, Pair right, float mutualTrust)
+        {
+            var newIndividuals = new Individual[left.Individuals.Length + right.Individuals.Length];
+            Array.Copy(left.Individuals, newIndividuals, left.Individuals.Length);
+            Array.Copy(right.Individuals, 0, newIndividuals, left.Individuals.Length, right.Individuals.Length);
+            left.Individuals = newIndividuals;
+            left.LowerMatchThreshold = (left.LowerMatchThreshold + right.LowerMatchThreshold) / 2;
+            left.UpperMatchThreshold = (left.UpperMatchThreshold + right.UpperMatchThreshold) / 2;
+            left.Popularity = left.Popularity + right.Popularity - mutualTrust;
+            left.SortedPeers = GetSorted(MergePeers(left, right));
+        }
 
         private static IEnumerable<(int, float)> MergePeers(Pair next, Pair match)
             => next.SortedPeers.Where(p => p.TargetId != match.Id)
             .Concat(match.SortedPeers.Where(p => p.TargetId != next.Id))
             .GroupBy(p => p.TargetId)
             .Select(g => (g.Key, g.Sum(p => p.Trust)));
-
-        private static float MergePopularity(Pair a, Pair b)
-            => a.Popularity
-                + b.Popularity
-                - a.SortedPeers.Single(p => p.TargetId == b.Id).Trust
-                - b.SortedPeers.Single(p => p.TargetId == a.Id).Trust;
-
-        private static bool CanMatchWith(Pair subject, Pair target)
-            => subject.SortedPeers
-            .TakeWhile(p => p.Trust > subject.UpperMatchThreshold)
-            .Any(p => p.TargetId == target.Id);
 
         private IEnumerable<Pair> Gather(Dictionary<int, Individual> calibrated)
         {
@@ -105,6 +113,7 @@ namespace Netocracy.Console.Business
                     ? new()
                     {
                         Id = individual.Id,
+                        Individuals = new[] { individual },
                         LowerMatchThreshold = individual.LowerMatchThreshold,
                         UpperMatchThreshold = individual.UpperMatchThreshold,
                         Popularity = fans.Sum(p => p.Trust),
@@ -115,33 +124,16 @@ namespace Netocracy.Console.Business
         private static SortedPeer[] GetSorted(IEnumerable<(int to, float trust)> trusts)
             => trusts.OrderByDescending(p => p.trust).Select(t => new SortedPeer(t.to, t.trust)).ToArray();
 
-        private Tribe[] GenerateTribes(IEnumerable<Pair> pairs, IDictionary<int, Individual> calibrated)
+        private Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
         {
-            return pairs.Where(p => p.Left != null).Select(GenerateTribe).ToArray();
+            return pairs.Where(p => p.Individuals.Length > 1).Select(GenerateTribe).ToArray();
 
             Tribe GenerateTribe(Pair pair)
                 => new()
                 {
-                    Id = $"{pair.Left.Id}-{pair.Right.Id}",
-                    Members = CollectMembers(pair).ToArray()
+                    Id = $"{pair.Individuals[0].Id}-{pair.Individuals[1].Id}",
+                    Members = pair.Individuals
                 };
-
-            IEnumerable<Individual> CollectMembers(Pair pair)
-            {
-                var stack = new Stack<Pair>(new[] { pair });
-                do
-                {
-                    pair = stack.Pop();
-                    if (pair.Left is null)
-                        yield return calibrated[pair.Id];
-                    else
-                    {
-                        stack.Push(pair.Right);
-                        stack.Push(pair.Left);
-                    }
-                }
-                while (stack.Any());
-            }
         }
     }
 }
