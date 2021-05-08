@@ -50,14 +50,10 @@ namespace Netocracy.Console.Business
         private static Peer[] ReroutePeers(Peer[] peers, Dictionary<int, int> reroute)
         {
             var dict = new Dictionary<int, float>();
+            var count = 0;
             foreach (var p in peers)
-            {
-                var newTargetId = reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId;
-                dict[newTargetId] = dict.TryGetValue(newTargetId, out var val) ? val + p.Trust : p.Trust;
-            }
-            var mergedPeers = dict.Select(t => new Peer(t.Key, t.Value)).ToArray();
-            Array.Sort(mergedPeers);
-            return mergedPeers;
+                AddTrust(dict, reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId, p.Trust, ref count);
+            return GenerateMergedPeers(dict, count);
         }
 
         private static (Pair gallant, Pair bride, float mutualTrust) FindMatch(Pair gallant, Dictionary<int, Pair> matchable)
@@ -106,26 +102,7 @@ namespace Netocracy.Console.Business
             var dict = next.SortedPeers.ToDictionary(p => p.TargetId, p => p.Trust);
             var count = dict.Count;
             foreach (var p in match.SortedPeers)
-            {
-                var found = dict.TryGetValue(p.TargetId, out var val);
-                if (found)
-                {
-                    if (val == -p.Trust)
-                    {
-                        dict.Remove(p.TargetId);
-                        count--;
-                    }
-                    else
-                    {
-                        dict[p.TargetId] = val + p.Trust;
-                    }
-                }
-                else if (val != -p.Trust)
-                {
-                    dict.Add(p.TargetId, p.Trust);
-                    count++;
-                }
-            }
+                AddTrust(dict, p.TargetId, p.Trust, ref count);
             if (dict.ContainsKey(next.Id))
             {
                 dict.Remove(next.Id);
@@ -136,9 +113,36 @@ namespace Netocracy.Console.Business
                 dict.Remove(match.Id);
                 count--;
             }
+            return GenerateMergedPeers(dict, count);
+        }
+
+        private static void AddTrust(Dictionary<int, float> mergedTrust, int targetId, float trust, ref int count)
+        {
+            var found = mergedTrust.TryGetValue(targetId, out var val);
+            if (found)
+            {
+                if (val == -trust)
+                {
+                    mergedTrust.Remove(targetId);
+                    count--;
+                }
+                else
+                {
+                    mergedTrust[targetId] = val + trust;
+                }
+            }
+            else if (val != -trust)
+            {
+                mergedTrust.Add(targetId, trust);
+                count++;
+            }
+        }
+
+        private static Peer[] GenerateMergedPeers(Dictionary<int, float> mergedTrust, int count)
+        {
             var mergedPeers = new Peer[count];
             var i = 0;
-            foreach (var t in dict)
+            foreach (var t in mergedTrust)
             {
                 mergedPeers[i++] = new Peer(t.Key, t.Value);
             }
