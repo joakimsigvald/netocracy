@@ -103,11 +103,45 @@ namespace Netocracy.Console.Business
 
         private static Peer[] MergePeers(Pair next, Pair match)
         {
-            var dict = new Dictionary<int, float>();
-            foreach (var p in next.SortedPeers.Where(p => p.TargetId != match.Id)
-                .Concat(match.SortedPeers.Where(p => p.TargetId != next.Id)))
-                dict[p.TargetId] = dict.TryGetValue(p.TargetId, out var val) ? val + p.Trust : p.Trust;
-            var mergedPeers = dict.Select(t => new Peer(t.Key, t.Value)).ToArray();
+            var dict = next.SortedPeers.ToDictionary(p => p.TargetId, p => p.Trust);
+            var count = dict.Count;
+            foreach (var p in match.SortedPeers)
+            {
+                var found = dict.TryGetValue(p.TargetId, out var val);
+                if (found)
+                {
+                    if (val == -p.Trust)
+                    {
+                        dict.Remove(p.TargetId);
+                        count--;
+                    }
+                    else
+                    {
+                        dict[p.TargetId] = val + p.Trust;
+                    }
+                }
+                else if (val != -p.Trust)
+                {
+                    dict.Add(p.TargetId, p.Trust);
+                    count++;
+                }
+            }
+            if (dict.ContainsKey(next.Id))
+            {
+                dict.Remove(next.Id);
+                count--;
+            }
+            if (dict.ContainsKey(match.Id))
+            {
+                dict.Remove(match.Id);
+                count--;
+            }
+            var mergedPeers = new Peer[count];
+            var i = 0;
+            foreach (var t in dict)
+            {
+                mergedPeers[i++] = new Peer(t.Key, t.Value);
+            }
             Array.Sort(mergedPeers);
             return mergedPeers;
         }
