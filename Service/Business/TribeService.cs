@@ -11,7 +11,7 @@ namespace Netocracy.Console.Business
         public Task<Tribe[]> ComputeTribes(params Individual[] individuals)
         {
             var calibrated = individuals.ToDictionary(ind => ind.Id);
-            var matchable = Gather(calibrated).ToDictionary(inh => inh.Id);
+            var matchable = Gather(calibrated);
             var lastCount = 0;
             do
             {
@@ -50,10 +50,9 @@ namespace Netocracy.Console.Business
         private static Peer[] ReroutePeers(Peer[] peers, Dictionary<int, int> reroute)
         {
             var dict = new Dictionary<int, float>();
-            var count = 0;
             foreach (var p in peers)
-                AddTrust(dict, reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId, p.Trust, ref count);
-            return GenerateMergedPeers(dict, count);
+                AddTrust(dict, reroute.TryGetValue(p.TargetId, out var nt) ? nt : p.TargetId, p.Trust);
+            return GenerateMergedPeers(dict);
         }
 
         private static (Pair gallant, Pair bride, float mutualTrust) FindMatch(Pair gallant, Dictionary<int, Pair> matchable)
@@ -75,11 +74,10 @@ namespace Netocracy.Console.Business
                 var upperThreshold = bride.UpperMatchThreshold;
                 foreach (var mutualTrust in bride.SortedPeers)
                 {
-                    var mutual = mutualTrust.Trust;
-                    if (mutualTrust.TargetId == gallant.Id)
-                        return mutual > upperThreshold ? (bride, mutual) : default;
-                    else if (mutual <= upperThreshold)
+                    if (mutualTrust.Trust <= upperThreshold)
                         return default;
+                    if (mutualTrust.TargetId == gallant.Id)
+                        return (bride, mutualTrust.Trust);
                 }
                 return default;
             }
@@ -100,47 +98,32 @@ namespace Netocracy.Console.Business
         private static Peer[] MergePeers(Pair next, Pair match)
         {
             var dict = next.SortedPeers.ToDictionary(p => p.TargetId, p => p.Trust);
-            var count = dict.Count;
             foreach (var p in match.SortedPeers)
-                AddTrust(dict, p.TargetId, p.Trust, ref count);
+                AddTrust(dict, p.TargetId, p.Trust);
             if (dict.ContainsKey(next.Id))
-            {
                 dict.Remove(next.Id);
-                count--;
-            }
             if (dict.ContainsKey(match.Id))
-            {
                 dict.Remove(match.Id);
-                count--;
-            }
-            return GenerateMergedPeers(dict, count);
+            return GenerateMergedPeers(dict);
         }
 
-        private static void AddTrust(Dictionary<int, float> mergedTrust, int targetId, float trust, ref int count)
+        private static void AddTrust(Dictionary<int, float> mergedTrust, int targetId, float trust)
         {
             var found = mergedTrust.TryGetValue(targetId, out var val);
             if (found)
             {
                 if (val == -trust)
-                {
                     mergedTrust.Remove(targetId);
-                    count--;
-                }
                 else
-                {
                     mergedTrust[targetId] = val + trust;
-                }
             }
             else if (val != -trust)
-            {
                 mergedTrust.Add(targetId, trust);
-                count++;
-            }
         }
 
-        private static Peer[] GenerateMergedPeers(Dictionary<int, float> mergedTrust, int count)
+        private static Peer[] GenerateMergedPeers(Dictionary<int, float> mergedTrust)
         {
-            var mergedPeers = new Peer[count];
+            var mergedPeers = new Peer[mergedTrust.Count];
             var i = 0;
             foreach (var t in mergedTrust)
             {
@@ -150,34 +133,38 @@ namespace Netocracy.Console.Business
             return mergedPeers;
         }
 
-        private IEnumerable<Pair> Gather(Dictionary<int, Individual> calibrated)
+        private static Dictionary<int, Pair> Gather(Dictionary<int, Individual> calibrated)
         {
-            return calibrated.Values
-                .SelectMany(ci => ci.Peers)
-                .GroupBy(p => p.TargetId)
-                .Select(CreatePair)
-                .Where(v => v != null);
-
-            Pair CreatePair(IGrouping<int, Peer> fans)
-                => calibrated.TryGetValue(fans.Key, out var individual)
-                    ? new()
-                    {
-                        Id = individual.Id,
-                        Individuals = new[] { individual },
-                        LowerMatchThreshold = individual.LowerMatchThreshold,
-                        UpperMatchThreshold = individual.UpperMatchThreshold,
-                        Popularity = fans.Sum(p => p.Trust),
-                        SortedPeers = GetSorted(individual.Peers)
-                    } : null;
+            var dict = new Dictionary<int, float>();
+            foreach (var ind in calibrated.Values)
+                foreach (var p in ind.Peers)
+                {
+                    var id = p.TargetId;
+                    if (dict.TryGetValue(id, out var val))
+                        dict[id] = val + p.Trust;
+                    else if (calibrated.ContainsKey(id))
+                        dict[id] = p.Trust;
+                }
+            var res = new KeyValuePair<int, Pair>[dict.Count];
+            int i = 0;
+            foreach (var t in dict)
+            {
+                var ind = calibrated[t.Key];
+                Array.Sort(ind.Peers);
+                res[i++] = new KeyValuePair<int, Pair>(t.Key, new()
+                {
+                    Id = ind.Id,
+                    Individuals = new[] { ind },
+                    LowerMatchThreshold = ind.LowerMatchThreshold,
+                    UpperMatchThreshold = ind.UpperMatchThreshold,
+                    Popularity = t.Value,
+                    SortedPeers = ind.Peers
+                });
+            }
+            return new Dictionary<int, Pair>(res);
         }
 
-        private static Peer[] GetSorted(Peer[] peers)
-        {
-            Array.Sort(peers);
-            return peers;
-        }
-
-        private Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
+        private static Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
         {
             return pairs.Where(p => p.Individuals.Length > 1).Select(GenerateTribe).ToArray();
 
