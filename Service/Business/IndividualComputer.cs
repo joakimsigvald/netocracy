@@ -35,14 +35,11 @@ namespace Netocracy.Console.Business
             }
         }
 
-        private static Individual MapToIndividual(List<Peer> peers, int index)
-        {
-            ScalePeers(peers, 1f / peers.Count);
-            return new(index + 1, peers.ToArray());
-        }
+        private static Individual MapToIndividual(List<Peer> peers, int index) 
+            => new(index + 1, ScalePeers(peers, 1f / peers.Count));
 
-        private static void ScalePeers(List<Peer> peers, float factor) 
-            => peers.ForEach(p => p.Trust *= factor);
+        private static Peer[] ScalePeers(List<Peer> peers, float factor) 
+            => peers.Select(p => new Peer(p.TargetId, p.Trust *= factor)).ToArray();
 
         public static Individual Calibrate(Individual individual)
         {

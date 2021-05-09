@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Netocracy.Service.Console;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -111,7 +112,7 @@ namespace Netocracy.Console.Business.Test
                 CreateIndividual(3, 1, 2, 4),
                 CreateIndividual(4, 1, 2, 3),
             };
-            individuals[0].Peers[0].Trust = -1;
+            individuals[0].Peers[0].Trust = -1f/3;
 
             var tribes = await ComputeTribes(individuals);
 
@@ -130,10 +131,10 @@ namespace Netocracy.Console.Business.Test
                 CreateIndividual(3, 1, 2, 4),
                 CreateIndividual(4, 1, 2, 3),
             };
-            individuals[0].Peers[1].Trust = -1;
-            individuals[1].Peers[1].Trust = -1;
-            individuals[2].Peers[0].Trust = -1;
-            individuals[3].Peers[0].Trust = -1;
+            individuals[0].Peers[1].Trust = -1f / 3;
+            individuals[1].Peers[1].Trust = -1f / 3;
+            individuals[2].Peers[0].Trust = -1f / 3;
+            individuals[3].Peers[0].Trust = -1f / 3;
 
             var tribes = await ComputeTribes(individuals);
 
@@ -147,7 +148,8 @@ namespace Netocracy.Console.Business.Test
         }
 
         [Fact]
-        public async Task GivenDifferentTrust_ChooseMoreTrustedPeerFirst() {
+        public async Task GivenDifferentTrust_ChooseMoreTrustedPeerFirst()
+        {
             var individuals = new[]
             {
                 CreateIndividual(1, 0f, 0.2f, 0.5f, 0.3f),
@@ -179,8 +181,8 @@ namespace Netocracy.Console.Business.Test
             var tribes = await ComputeTribes(individuals);
 
             var tribe = Assert.Single(tribes);
-            Assert.Equal("5-4", tribe.Id);
-            AssertMembers(individuals, tribe, 4, 3, 1, 0, 2);
+            Assert.Equal("2-1", tribe.Id);
+            AssertMembers(individuals, tribe, 1, 0, 2, 4, 3);
         }
 
         [Fact]
@@ -207,8 +209,17 @@ namespace Netocracy.Console.Business.Test
             AssertMembers(individuals.Skip(3).ToArray(), tribe2, 1, 0, 2);
         }
 
+        [Fact]
+        public async Task Test_100_000_Individuals()
+        {
+            var individuals = Repository.LoadIndividuals();
+            var tribes = await ComputeTribes(individuals);
+            foreach (var tribe in tribes)
+                Assert.True(tribe.Admiration >= 0);
+        }
+
         private static Task<Tribe[]> ComputeTribes(params Individual[] individuals)
-            => new TribeService().ComputeTribes(individuals);
+            => TribeComputer.ComputeTribes(individuals);
 
         private static void AssertMembers(Individual[] individuals, Tribe tribe, params int[] order)
         {

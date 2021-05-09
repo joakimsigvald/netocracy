@@ -1,12 +1,10 @@
 ﻿using Netocracy.Console.Business;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Netocracy.Console.Console
+namespace Netocracy.Service.Console
 {
     class Program
     {
@@ -20,15 +18,9 @@ namespace Netocracy.Console.Console
             var individuals =
                 mode.HasFlag(Mode.CreateIndividuals)
                 ? GenerateIndividuals(args, stopwatch)
-                : LoadIndividuals();
+                : Repository.LoadIndividuals();
             if (mode.HasFlag(Mode.GenerateTribes))
                 await ComputeTribes(individuals, stopwatch);
-        }
-
-        private static Individual[] LoadIndividuals()
-        {
-            var json = File.ReadAllText("individuals.json");
-            return JsonSerializer.Deserialize<Individual[]>(json);
         }
 
         private static Individual[] GenerateIndividuals(string[] args, Stopwatch stopwatch)
@@ -42,16 +34,14 @@ namespace Netocracy.Console.Console
             var individuals = IndividualComputer.GenerateIndividuals(count, friends, foes, horizon);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating {count} individuals took {stopwatch.ElapsedMilliseconds} ms");
-            var json = JsonSerializer.Serialize(individuals); 
-            File.WriteAllText("individuals.json", json);
+            Repository.SaveIndividuals(individuals);
             return individuals;
         }
 
         private static async Task ComputeTribes(Individual[] individuals, Stopwatch stopwatch)
         {
             stopwatch.Restart();
-            var service = new TribeService();
-            var tribes = await service.ComputeTribes(individuals);
+            var tribes = await TribeComputer.ComputeTribes(individuals);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating tribes took {stopwatch.ElapsedMilliseconds} ms");
             System.Console.WriteLine($"Generated {tribes.Length} tribes with sizes {string.Join(", ", tribes.Select(t => t.Members.Length))}");

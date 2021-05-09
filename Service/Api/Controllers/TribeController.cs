@@ -8,12 +8,8 @@ namespace Api.Controllers
     [Route("tribes")]
     public class TribeController : ControllerBase
     {
-        private readonly TribeService _service;
-
-        public TribeController(TribeService service) => _service = service;
-
         [HttpPost]
         public Task<Tribe[]> ComputeTribes([FromBody] Individual[] individuals)
-            => _service.ComputeTribes(individuals);
+            => TribeComputer.ComputeTribes(individuals);
     }
 }
