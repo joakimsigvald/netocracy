@@ -32,24 +32,21 @@ namespace Netocracy.Console.Business
                 var next = currentPairs[i];
                 if (next.IsMatched) continue;
                 matchable.Remove(next.Id);
-                var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
-                if (bride != null)
+                var addPair = false;
+                do
                 {
-                    if (bride.SortedPeers.Length == 1)
-                    {
-                        i--;
-                        MergeIndividuals(gallant, bride);
-                        MergePopularity(gallant, bride, mutualTrust);
-                        gallant.SortedPeers = RemovePeer(gallant.SortedPeers, bride.Id);
-                    }
+                    var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
+                    if (bride == null) break;
+                    addPair = bride.SortedPeers.Length == 1;
+                    if (addPair)
+                        AddPair(gallant, bride, mutualTrust);
                     else
-                    {
                         MergePairs(gallant, bride, mutualTrust);
-                    }
                     reroute[bride.Id] = next.Id;
                     matchable.Remove(bride.Id);
                     bride.IsMatched = true;
                 }
+                while (addPair);
             }
             matchable = currentPairs.Where(p => !p.IsMatched).ToDictionary(p => p.Id);
             foreach (var m in matchable.Values)
@@ -96,6 +93,13 @@ namespace Netocracy.Console.Business
             MergeIndividuals(left, right);
             MergePopularity(left, right, mutualTrust);
             left.SortedPeers = MergePeers(left, right);
+        }
+
+        private static void AddPair(Pair left, Pair right, float mutualTrust)
+        {
+            MergeIndividuals(left, right);
+            MergePopularity(left, right, mutualTrust);
+            left.SortedPeers = RemovePeer(left.SortedPeers, right.Id);
         }
 
         private static void MergePopularity(Pair to, Pair from, float mutualTrust)
