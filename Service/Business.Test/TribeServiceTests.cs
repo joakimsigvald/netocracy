@@ -207,6 +207,51 @@ namespace Netocracy.Console.Business.Test
             AssertMembers(individuals.Skip(3).ToArray(), tribe2, 1, 0, 2);
         }
 
+
+        [Fact]
+        public async Task OnePairCanMergeWithSeveralPairsInSameRound()
+        {
+            var individuals = new[]
+            {
+                CreateIndividual(1, 0, 1f, 0, 0, 0),
+                CreateIndividual(2, 0.6f, 0, 0.4f, 0, 0),
+                CreateIndividual(3, 0.4f, 0.5f, 0.1f, 0, 0),
+                CreateIndividual(4, 0.9f, 0, 0, 0, 0.1f),
+                CreateIndividual(5, 0.2f, 0.2f, 0.2f, 0.4f, 0),
+            };
+            //popularity: 2.1, 1.7, 0.7, 0.4, 0.1
+            var tribes = await ComputeTribes(individuals);
+
+            Assert.Equal(2, tribes.Length);
+            var tribe1 = tribes[0];
+            var tribe2 = tribes[1];
+            Assert.Equal("1-2", tribe1.Id);
+            AssertMembers(individuals.Take(3).ToArray(), tribe1, 0, 1, 2);
+            Assert.Equal("4-5", tribe2.Id);
+            AssertMembers(individuals.Skip(3).ToArray(), tribe2, 0, 1);
+        }
+
+        [Theory]
+        [InlineData(200, 20, 2, 100)]
+        [InlineData(1_000, 50, 5, 500)]
+        [InlineData(10_000, 50, 5, 1_000)]
+        public async Task TestGenerate(int count, int friends, int foes, int horizon)
+        {
+            var individuals = IndividualComputer.GenerateIndividuals(count, friends, foes, horizon);
+            var tribes = await ComputeTribes(individuals);
+            foreach (var tribe in tribes)
+                Assert.True(tribe.Admiration >= 0);
+        }
+
+        //[Fact]
+        //public async Task Test_100_000_Individuals()
+        //{
+        //    var individuals = Repository.LoadIndividuals();
+        //    var tribes = await ComputeTribes(individuals);
+        //    foreach (var tribe in tribes)
+        //        Assert.True(tribe.Admiration >= 0);
+        //}
+
         private static Task<Tribe[]> ComputeTribes(params Individual[] individuals)
             => new TribeService().ComputeTribes(individuals);
 
