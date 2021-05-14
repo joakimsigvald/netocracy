@@ -28,7 +28,6 @@ namespace Api
                     Version = "v1"
                 });
             });
-            services.AddTransient<TribeService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

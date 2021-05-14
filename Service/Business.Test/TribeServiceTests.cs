@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Netocracy.Console.Console;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -111,7 +112,7 @@ namespace Netocracy.Console.Business.Test
                 CreateIndividual(3, 1, 2, 4),
                 CreateIndividual(4, 1, 2, 3),
             };
-            individuals[0].Peers[0].Trust = -1;
+            individuals[0].Peers[0] = individuals[0].Peers[0].WithTrust(-1);
 
             var tribes = await ComputeTribes(individuals);
 
@@ -130,10 +131,10 @@ namespace Netocracy.Console.Business.Test
                 CreateIndividual(3, 1, 2, 4),
                 CreateIndividual(4, 1, 2, 3),
             };
-            individuals[0].Peers[1].Trust = -1;
-            individuals[1].Peers[1].Trust = -1;
-            individuals[2].Peers[0].Trust = -1;
-            individuals[3].Peers[0].Trust = -1;
+            individuals[0].Peers[1] = individuals[0].Peers[1].WithTrust(-1);
+            individuals[1].Peers[1] = individuals[1].Peers[1].WithTrust(-1);
+            individuals[2].Peers[0] = individuals[2].Peers[0].WithTrust(-1);
+            individuals[3].Peers[0] = individuals[3].Peers[0].WithTrust(-1);
 
             var tribes = await ComputeTribes(individuals);
 
@@ -244,16 +245,16 @@ namespace Netocracy.Console.Business.Test
         }
 
         //[Fact]
-        //public async Task Test_100_000_Individuals()
-        //{
-        //    var individuals = Repository.LoadIndividuals();
-        //    var tribes = await ComputeTribes(individuals);
-        //    foreach (var tribe in tribes)
-        //        Assert.True(tribe.Admiration >= 0);
-        //}
+        public async Task Test_100_000_Individuals()
+        {
+            var individuals = Repository.LoadIndividuals();
+            var tribes = await ComputeTribes(individuals);
+            foreach (var tribe in tribes)
+                Assert.True(tribe.Admiration >= 0);
+        }
 
         private static Task<Tribe[]> ComputeTribes(params Individual[] individuals)
-            => new TribeService().ComputeTribes(individuals);
+            => TribeService.ComputeTribes(individuals);
 
         private static void AssertMembers(Individual[] individuals, Tribe tribe, params int[] order)
         {
