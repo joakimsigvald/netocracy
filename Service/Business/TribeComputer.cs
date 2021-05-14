@@ -8,9 +8,10 @@ namespace Netocracy.Console.Business
     //https://docs.google.com/document/d/1a0LRTN9ta6nwODoeKM3mUHrLAL_PDSnsUVLHIWhLJcA/edit?usp=sharing
     public class TribeComputer
     {
-        private IDictionary<int, List<Peer>> _incomingTrust;
-        private IDictionary<int, List<Peer>> _outgoingTrust;
+        private IDictionary<int, float> _popularity;
+        private IDictionary<int, Peer[]> _outgoingTrust;
         private IDictionary<int, Pair> _pairLookup;
+        private IDictionary<int, int> _reroute = new Dictionary<int, int>();
         private Pair[] _pairs;
 
         public static Task<Tribe[]> ComputeTribes(Individual[] individuals)
@@ -37,112 +38,85 @@ namespace Netocracy.Console.Business
         private void GeneratePairs()
         {
             var n = _pairs.Length;
-            var skip = 0;
+            _reroute.Clear();
             for (var i = 0; i < n; i++)
             {
                 var next = _pairs[i];
                 if (next.Popularity == float.MinValue) continue;
-                var (gallant, bride, mutualTrust) = FindMatch(next);
+                var (gallant, bride) = FindMatch(next);
                 if (bride != null)
                 {
-                    MergePairs(gallant, bride, mutualTrust);
-                    skip++;
+                    _reroute.Add(bride.Id, gallant.Id);
+                    MergePairs(gallant, bride);
                 }
             }
+            foreach (var id in _outgoingTrust.Keys)
+                MergeTrust(id, _outgoingTrust);
+            ComputeIncomingTrust();
+            foreach (var p in _pairs.Where(p => p.Popularity != float.MinValue))
+                p.Popularity = _popularity.TryGetValue(p.Id, out var val) ? val : 0;
             Array.Sort(_pairs);
-            _pairs = _pairs[..^skip];
+            _pairs = _pairs[..^_reroute.Count];
+            if (_pairs.Select(p => p.Id).Distinct().Count() < _pairs.Length)
+                throw new InvalidProgramException();
         }
 
-        private (Pair gallant, Pair bride, float mutualTrust) FindMatch(Pair gallant)
+        private (Pair gallant, Pair bride) FindMatch(Pair gallant)
         {
             var outgoing = _outgoingTrust[gallant.Id];
             foreach (var candidate in outgoing)
             {
                 if (candidate.Trust <= 0)
                     return default;
-                var (bride, trust) = ProposeTo(candidate);
+                var bride = ProposeTo(candidate);
                 if (bride != null)
+                {
+                    if (bride.Popularity < float.MinValue / 2)
+                        throw new InvalidProgramException();
                     return gallant.Individuals.Length < bride.Individuals.Length
-                        ? (bride, gallant, candidate.Trust + trust)
-                        : (gallant, bride, candidate.Trust + trust);
+                        ? (bride, gallant)
+                        : (gallant, bride);
+                }
             }
             return default;
 
-            (Pair bride, float trust) ProposeTo(Peer candidate)
+            Pair ProposeTo(Peer candidate)
             {
-                var candidateTrust = _outgoingTrust[candidate.TargetId];
+                var candidateId = candidate.TargetId;
+                Peer[] candidateTrust;
+                while (!_outgoingTrust.TryGetValue(candidateId, out candidateTrust))
+                    candidateId = _reroute[candidateId];
                 foreach (var mutualTrust in candidateTrust)
                 {
                     if (mutualTrust.Trust <= 0)
                         return default;
                     if (mutualTrust.TargetId == gallant.Id)
-                        return (_pairLookup[candidate.TargetId], mutualTrust.Trust);
+                        return _pairLookup[candidateId];
                 }
                 return default;
             }
         }
 
-        private void MergePairs(Pair left, Pair right, float mutualTrust)
+        private void MergePairs(Pair left, Pair right)
         {
+            if (left.Id == right.Id)
+                throw new InvalidProgramException();
+            if (left.Popularity < float.MinValue / 2)
+                throw new InvalidProgramException();
             MergeIndividuals(left, right);
-            MergePopularity(left, right, mutualTrust);
-            MergeTrust(left.Id, right.Id);
+            MergeOutgoingTrust(left.Id, right.Id);
+            right.Popularity = float.MinValue;
             _pairLookup.Remove(right.Id);
         }
 
-        private static void MergePopularity(Pair left, Pair right, float mutualTrust)
+        private void MergeOutgoingTrust(int leftId, int rightId)
         {
-            left.Popularity = left.Popularity + right.Popularity - mutualTrust;
-            right.Popularity = float.MinValue;
-        }
-
-        private void MergeTrust(int leftId, int rightId)
-        {
-            var rebindIncoming = MergeTrust(_outgoingTrust, leftId, rightId);
-            var rebindOutgoing = MergeTrust(_incomingTrust, leftId, rightId);
-            RebindTrust(leftId, rightId, rebindIncoming, _incomingTrust, false);
-            RebindTrust(leftId, rightId, rebindOutgoing, _outgoingTrust, true);
-        }
-
-        private static Peer[] MergeTrust(IDictionary<int, List<Peer>> dict, int leftId, int rightId)
-        {
-            dict[leftId] =
-                dict[leftId]
-                .Concat(dict[rightId])
-                .Where(p => p.TargetId != leftId && p.TargetId != rightId)
-                .GroupBy(t => t.TargetId)
-                .Select(g => new Peer(g.Key, g.Sum(p => p.Trust)))
-                .ToList();
-            var rebind = dict[rightId].Where(p => p.TargetId != leftId).ToArray();
+            var dict = _outgoingTrust[leftId].ToDictionary(p => p.TargetId, p => p.Trust);
             dict.Remove(rightId);
-            return rebind;
-        }
-
-        private static void RebindTrust(int leftId, int rightId, Peer[] rebindIncoming, IDictionary<int, List<Peer>> dict, bool isOrdered)
-        {
-            foreach (var removedIncoming in rebindIncoming)
-            {
-                var addTrust = removedIncoming.Trust;
-                var list = dict[removedIncoming.TargetId];
-                var n = list.Count;
-                var i = 0;
-                for (; i < n; i++)
-                {
-                    var peer = list[i];
-                    if (peer.TargetId == leftId || peer.TargetId == rightId)
-                    {
-                        if (peer.TargetId == leftId)
-                            addTrust += peer.Trust;
-                        list.RemoveAt(i--);
-                        n--;
-                    }
-                }
-                if (isOrdered)
-                    for (i = 0; i < n; i++)
-                        if (list[i].Trust < addTrust)
-                            break;
-                list.Insert(i, new Peer(leftId, addTrust));
-            }
+            foreach (var p in _outgoingTrust[rightId])
+                AddTrust(leftId, dict, GetId(p.TargetId), p.Trust);
+            _outgoingTrust[leftId] = GenerateMergedPeers(dict);
+            _outgoingTrust.Remove(rightId);
         }
 
         private static void MergeIndividuals(Pair left, Pair right)
@@ -153,45 +127,77 @@ namespace Netocracy.Console.Business
             left.Individuals = newIndividuals;
         }
 
+        private void MergeTrust(int id, IDictionary<int, Peer[]> trusts)
+        {
+            var dict = new Dictionary<int, float>();
+            foreach (var p in trusts[id])
+                AddTrust(id, dict, GetId(p.TargetId), p.Trust);
+            trusts[id] = GenerateMergedPeers(dict);
+        }
+
+        private int GetId(int id)
+        {
+            while (_reroute.TryGetValue(id, out var nid)) id = nid;
+            return id;
+        }
+
+        private static void AddTrust(int sourceId, Dictionary<int, float> mergedTrust, int targetId, float trust)
+        {
+            if (sourceId == targetId)
+                return;
+            if (!mergedTrust.TryGetValue(targetId, out var val))
+                mergedTrust.Add(targetId, trust);
+            else if (val == -trust)
+                mergedTrust.Remove(targetId);
+            else
+                mergedTrust[targetId] = val + trust;
+        }
+
+        private static Peer[] GenerateMergedPeers(Dictionary<int, float> mergedTrust)
+        {
+            var mergedPeers = mergedTrust.Select(t => new Peer(t.Key, t.Value)).ToArray();
+            Array.Sort(mergedPeers);
+            return mergedPeers;
+        }
+
         private void Gather(Dictionary<int, Individual> calibrated)
         {
-            _incomingTrust = new Dictionary<int, List<Peer>>();
-            _outgoingTrust = new Dictionary<int, List<Peer>>();
+            _outgoingTrust = new Dictionary<int, Peer[]>();
+            _popularity = new Dictionary<int, float>();
             foreach (var ind in calibrated.Values)
             {
                 var fromId = ind.Id;
-                foreach (var p in ind.Peers)
-                {
-                    var toId = p.TargetId;
-                    if (!calibrated.ContainsKey(toId)) continue;
-                    Add(_incomingTrust, toId, new Peer(fromId, p.Trust));
-                    Add(_outgoingTrust, ind.Id, p);
-                }
-                if (_outgoingTrust.TryGetValue(ind.Id, out var val))
-                    val.Sort();
+                var arr = ind.Peers.Where(p => calibrated.ContainsKey(p.TargetId)).ToArray();
+                if (arr.Length == 0)
+                    continue;
+                Array.Sort(arr);
+                _outgoingTrust[ind.Id] = arr;
             }
-            _pairs = new Pair[_incomingTrust.Count];
+            ComputeIncomingTrust();
+            _pairs = new Pair[_popularity.Count];
             int i = 0;
-            foreach (var t in _incomingTrust)
+            foreach (var t in _popularity)
             {
                 var ind = calibrated[t.Key];
-                t.Value.Sort();
                 _pairs[i++] = new()
                 {
                     Id = ind.Id,
                     Individuals = new[] { ind },
-                    Popularity = t.Value.Sum(p => p.Trust),
+                    Popularity = t.Value,
                 };
             }
             Array.Sort(_pairs);
             _pairLookup = _pairs.ToDictionary(p => p.Id);
         }
 
-        private static void Add(IDictionary<int, List<Peer>> dict, int key, Peer val)
+        private void ComputeIncomingTrust()
         {
-            if (!dict.TryGetValue(key, out var list))
-                dict[key] = list = new List<Peer>();
-            list.Add(val);
+            _popularity = new Dictionary<int, float>();
+            foreach (var t in _outgoingTrust)
+                foreach (var p in t.Value)
+                    _popularity[p.TargetId] = _popularity.TryGetValue(p.TargetId, out var val)
+                        ? val + p.Trust
+                        : p.Trust;
         }
 
         private Tribe[] GenerateTribes()
