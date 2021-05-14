@@ -37,7 +37,7 @@ namespace Netocracy.Console.Business
                 {
                     var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
                     if (bride == null) break;
-                    addPair = bride.SortedPeers.Length == 1;
+                    addPair = bride.SortedPeers.Length < 2 || bride.SortedPeers[1].Trust <= 0;
                     if (addPair)
                         AddPair(gallant, bride, mutualTrust);
                     else
