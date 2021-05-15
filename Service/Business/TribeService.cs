@@ -24,14 +24,14 @@ namespace Netocracy.Console.Business
 
         private static Dictionary<int, Pair> GeneratePairs(Dictionary<int, Pair> matchable)
         {
-            var currentPairs = matchable.Values.OrderByDescending(p => p.Popularity).ToArray();
             var reroute = new Dictionary<int, int>();
-            var n = currentPairs.Length;
-            for (var i = 0; i < n; i++)
+            var nextPairs = new Dictionary<int, Pair>();
+            var mergeActions = new Dictionary<int, Action>();
+            foreach (var next in matchable.Values.OrderByDescending(p => p.Popularity))
             {
-                var next = currentPairs[i];
                 if (next.IsMatched) continue;
                 matchable.Remove(next.Id);
+                nextPairs.Add(next.Id, next);
                 do
                 {
                     var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
@@ -40,7 +40,7 @@ namespace Netocracy.Console.Business
                     bride.IsMatched = true;
                     reroute[bride.Id] = next.Id;
                     if (bride.SortedPeers.Length > 1 && bride.SortedPeers[1].Trust > 0) {
-                        MergePairs(gallant, bride, mutualTrust);
+                        mergeActions.Add(gallant.Id, () => MergePairs(gallant, bride, mutualTrust));
                         break;
                     }
                     else
@@ -48,9 +48,13 @@ namespace Netocracy.Console.Business
                 }
                 while (true);
             }
-            matchable = currentPairs.Where(p => !p.IsMatched).ToDictionary(p => p.Id);
-            matchable.Values.AsParallel().ForAll(p => p.SortedPeers = ReroutePeers(p.SortedPeers, reroute));
-            return matchable;
+            nextPairs.Values.AsParallel().ForAll(p =>
+            {
+                if (mergeActions.TryGetValue(p.Id, out var action))
+                    action();
+                p.SortedPeers = ReroutePeers(p.SortedPeers, reroute);
+            });
+            return nextPairs;
         }
 
         private static Peer[] ReroutePeers(Peer[] peers, Dictionary<int, int> reroute)
