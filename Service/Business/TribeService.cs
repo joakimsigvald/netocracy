@@ -32,25 +32,24 @@ namespace Netocracy.Console.Business
                 var next = currentPairs[i];
                 if (next.IsMatched) continue;
                 matchable.Remove(next.Id);
-                var addPair = false;
                 do
                 {
                     var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
                     if (bride == null) break;
-                    addPair = bride.SortedPeers.Length < 2 || bride.SortedPeers[1].Trust <= 0;
-                    if (addPair)
-                        AddPair(gallant, bride, mutualTrust);
-                    else
-                        MergePairs(gallant, bride, mutualTrust);
-                    reroute[bride.Id] = next.Id;
                     matchable.Remove(bride.Id);
                     bride.IsMatched = true;
+                    reroute[bride.Id] = next.Id;
+                    if (bride.SortedPeers.Length > 1 && bride.SortedPeers[1].Trust > 0) {
+                        MergePairs(gallant, bride, mutualTrust);
+                        break;
+                    }
+                    else
+                        AddPair(gallant, bride, mutualTrust);
                 }
-                while (addPair);
+                while (true);
             }
             matchable = currentPairs.Where(p => !p.IsMatched).ToDictionary(p => p.Id);
-            foreach (var m in matchable.Values)
-                m.SortedPeers = ReroutePeers(m.SortedPeers, reroute);
+            matchable.Values.AsParallel().ForAll(p => p.SortedPeers = ReroutePeers(p.SortedPeers, reroute));
             return matchable;
         }
 
@@ -166,33 +165,27 @@ namespace Netocracy.Console.Business
 
         private static Dictionary<int, Pair> Gather(Dictionary<int, Individual> calibrated)
         {
-            var dict = new Dictionary<int, float>();
+            var dict = new Dictionary<int, Pair>();
             foreach (var ind in calibrated.Values)
                 foreach (var p in ind.Peers)
                 {
                     var id = p.TargetId;
                     if (dict.TryGetValue(id, out var val))
-                        dict[id] = val + p.Trust;
-                    else if (calibrated.ContainsKey(id))
-                        dict[id] = p.Trust;
+                        val.Popularity += p.Trust;
+                    else if (calibrated.TryGetValue(id, out var member))
+                    {
+                        Array.Sort(member.Peers);
+                        dict[id] = new()
+                        {
+                            Id = id,
+                            Individuals = new[] { member },
+                            Popularity = p.Trust,
+                            SortedPeers = member.Peers
+                        };
+                    }
                 }
-            var res = new KeyValuePair<int, Pair>[dict.Count];
-            int i = 0;
-            foreach (var t in dict)
-            {
-                var ind = calibrated[t.Key];
-                Array.Sort(ind.Peers);
-                res[i++] = new KeyValuePair<int, Pair>(t.Key, new()
-                {
-                    Id = ind.Id,
-                    Individuals = new[] { ind },
-                    Popularity = t.Value,
-                    SortedPeers = ind.Peers
-                });
-            }
-            return new Dictionary<int, Pair>(res);
+            return dict;
         }
-
         private static Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
         {
             return pairs.Where(p => p.Individuals.Length > 1).Select(GenerateTribe).ToArray();
