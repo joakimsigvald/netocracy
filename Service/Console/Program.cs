@@ -18,9 +18,30 @@ namespace Netocracy.Console.Console
             var individuals =
                 mode.HasFlag(Mode.CreateIndividuals)
                 ? GenerateIndividuals(args, stopwatch)
-                : Repository.LoadIndividuals();
+                : LoadIndividuals(stopwatch);
             if (mode.HasFlag(Mode.GenerateTribes))
                 await ComputeTribes(individuals, stopwatch);
+            else
+                SaveIndividuals(individuals, stopwatch);
+        }
+
+        private static void SaveIndividuals(Individual[] individuals, Stopwatch stopwatch)
+        {
+            System.Console.WriteLine($"Save {individuals.Length} individuals");
+            stopwatch.Start();
+            Repository.SaveIndividuals(individuals);
+            stopwatch.Stop();
+            System.Console.WriteLine($"Saving {individuals.Length} individuals took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static Individual[] LoadIndividuals(Stopwatch stopwatch)
+        {
+            System.Console.WriteLine($"Load individuals");
+            stopwatch.Start();
+            var individuals = Repository.LoadIndividuals();
+            stopwatch.Stop();
+            System.Console.WriteLine($"Loading {individuals.Length} individuals took {stopwatch.ElapsedMilliseconds} ms");
+            return individuals;
         }
 
         private static Individual[] GenerateIndividuals(string[] args, Stopwatch stopwatch)
@@ -34,7 +55,6 @@ namespace Netocracy.Console.Console
             var individuals = IndividualComputer.GenerateIndividuals(count, friends, foes, horizon);
             stopwatch.Stop();
             System.Console.WriteLine($"Generating {count} individuals took {stopwatch.ElapsedMilliseconds} ms");
-            Repository.SaveIndividuals(individuals);
             return individuals;
         }
 

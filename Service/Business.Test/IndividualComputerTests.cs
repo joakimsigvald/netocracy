@@ -71,5 +71,14 @@ namespace Netocracy.Console.Business.Test
             var actual = shifter(number);
             Assert.Equal(expected, actual);
         }
+
+        [Fact]
+        public void CanSerializeAndDeserialize()
+        {
+            var individuals = IndividualComputer.GenerateIndividuals(100, 10, 2, 100);
+            var str = IndividualComputer.SerializeIndividuals(individuals);
+            var deserialized = IndividualComputer.DeserializeIndividuals(str);
+            Assert.Equal(individuals, deserialized);
+        }
     }
 }

@@ -2,7 +2,7 @@
   "profiles": {
     "Console": {
       "commandName": "Project",
-      "commandLineArgs": "2 100000 50 5 2000"
+      "commandLineArgs": "2 400000 50 5 2000"
     }
   }
 }

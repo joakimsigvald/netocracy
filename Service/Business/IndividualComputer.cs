@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Netocracy.Console.Business
 {
@@ -39,7 +40,10 @@ namespace Netocracy.Console.Business
             => new(index + 1, ScalePeers(peers, 1f / peers.Count));
 
         private static Peer[] ScalePeers(List<Peer> peers, float factor)
-            => peers.Select(p => p.WithTrust(p.Trust * factor)).ToArray();
+                    => peers
+                    .Select(p => new Peer(p.TargetId, p.Trust *= factor))
+                    .OrderBy(p => p.TargetId)
+                    .ToArray();
 
         public static Individual Calibrate(Individual individual)
         {
@@ -80,6 +84,57 @@ namespace Netocracy.Console.Business
                 var upper = shifted >> halfBits;
                 return lower + upper;
             };
+        }
+
+        public static string SerializeIndividuals(Individual[] individuals)
+            => string.Join('\n', individuals.Select(Serialize));
+
+        public static Individual[] DeserializeIndividuals(string str)
+            => str.Split('\n').Select(Deserialize).ToArray();
+
+        public static string Serialize(Individual individual)
+            => $"{individual.Id}:{Serialize(individual.Peers)}";
+
+        public static string Serialize(Peer[] peers)
+        {
+            var f = peers.Min(p => Math.Abs(p.Trust));
+            var trust = peers
+                .Select(p => (id: p.TargetId, trust: (int)Math.Round(p.Trust / f)))
+                .OrderBy(t => t.id)
+                .ToArray();
+            var sb = new StringBuilder();
+            var prevId = 0;
+            foreach (var t in trust)
+            {
+                var s = t.trust > 0 ? $"+{t.trust}" : $"{t.trust}";
+                sb.Append($",{t.id - prevId}{s}");
+                prevId = t.id;
+            }
+            return sb.ToString()[1..];
+        }
+
+        public static Individual Deserialize(string str)
+        {
+            var parts = str.Split(':');
+            var id = int.Parse(parts[0]);
+            var peers = DeserializePeers(parts[1]).ToArray();
+            return Calibrate(new Individual(id, peers));
+        }
+
+        private static IEnumerable<Peer> DeserializePeers(string str)
+        {
+            var prevId = 0;
+            foreach (var t in str.Split(','))
+            {
+                var parts = t.Split('+');
+                if (parts.Length == 2)
+                    yield return new Peer(prevId = int.Parse(parts[0]) + prevId, int.Parse(parts[1]));
+                else
+                {
+                    parts = t.Split('-');
+                    yield return new Peer(prevId = int.Parse(parts[0]) + prevId, -int.Parse(parts[1]));
+                }
+            }
         }
     }
 }
