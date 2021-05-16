@@ -226,10 +226,10 @@ namespace Netocracy.Console.Business.Test
             Assert.Equal(2, tribes.Length);
             var tribe1 = tribes[0];
             var tribe2 = tribes[1];
-            Assert.Equal("1-2", tribe1.Id);
-            AssertMembers(individuals.Take(3).ToArray(), tribe1, 0, 1, 2);
-            Assert.Equal("4-5", tribe2.Id);
-            AssertMembers(individuals.Skip(3).ToArray(), tribe2, 0, 1);
+            Assert.Equal("4-5", tribe1.Id);
+            AssertMembers(individuals.Skip(3).ToArray(), tribe1, 0, 1);
+            Assert.Equal("1-2", tribe2.Id);
+            AssertMembers(individuals.Take(3).ToArray(), tribe2, 0, 1, 2);
         }
 
         [Theory]

@@ -12,18 +12,9 @@ namespace Netocracy.Console.Business
         {
             var calibrated = individuals.ToDictionary(ind => ind.Id);
             var matchable = Gather(calibrated);
-            var lastCount = 0;
-            var round = 0;
-            do
-            {
-                lastCount = matchable.Count;
-                round++;
+            for (var i = 0; i < 32; i++)
                 matchable = GeneratePairs(matchable);
-            }
-            while (round < 20 && lastCount > matchable.Count);
-            var finalPairs = (lastCount == matchable.Count
-                ? matchable.Values
-                : JoinTribes(matchable)).ToArray();
+            var finalPairs = JoinTribes(matchable).ToArray();
             return Task.FromResult(GenerateTribes(finalPairs));
         }
 
@@ -157,17 +148,6 @@ namespace Netocracy.Console.Business
             return GenerateMergedPeers(dict);
         }
 
-        private static Peer[] RemovePeer(Peer[] peers, int id)
-        {
-            var index = Array.FindIndex(peers, p => p.TargetId == id);
-            var newPeers = new Peer[peers.Length - 1];
-            if (index > 0)
-                Array.Copy(peers, newPeers, index);
-            if (index < newPeers.Length)
-                Array.Copy(peers, index + 1, newPeers, index, newPeers.Length - index);
-            return newPeers;
-        }
-
         private static void AddTrust(Dictionary<int, float> mergedTrust, int targetId, float trust)
         {
             var found = mergedTrust.TryGetValue(targetId, out var val);
@@ -217,6 +197,7 @@ namespace Netocracy.Console.Business
                 }
             return dict;
         }
+
         private static Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
         {
             return pairs.Where(p => p.Individuals.Length > 1).Select(GenerateTribe).ToArray();
