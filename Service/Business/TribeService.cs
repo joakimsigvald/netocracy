@@ -28,12 +28,12 @@ namespace Netocracy.Console.Business
                 if (next.IsMatched) continue;
                 matchable.Remove(next.Id);
                 nextPairs.Add(next.Id, next);
-                var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
-                if (bride == null) continue;
-                matchable.Remove(bride.Id);
-                bride.IsMatched = true;
-                reroute[bride.Id] = next.Id;
-                mergeActions.Add(gallant.Id, () => MergePairs(gallant, bride, mutualTrust));
+                var (match, mutualTrust) = FindMatch(next, matchable);
+                if (match == null) continue;
+                matchable.Remove(match.Id);
+                match.IsMatched = true;
+                reroute[match.Id] = next.Id;
+                mergeActions.Add(next.Id, () => MergePairs(next, match, mutualTrust));
             }
             nextPairs.Values.AsParallel().ForAll(p =>
             {
@@ -63,77 +63,51 @@ namespace Netocracy.Console.Business
             return GenerateMergedPeers(dict);
         }
 
-        private static (Prototribe gallant, Prototribe bride, float mutualTrust) FindMatch(Prototribe gallant, Dictionary<int, Prototribe> matchable)
+        private static (Prototribe match, float mutualTrust) FindMatch(Prototribe gallant, Dictionary<int, Prototribe> matchable)
         {
-            foreach (var candidate in gallant.SortedPeers)
-            {
-                if (candidate.Trust <= 0)
-                    return default;
-                var (bride, trust) = ProposeTo(candidate);
-                if (bride != null)
-                    return (gallant, bride, candidate.Trust + trust);
-            }
-            return default;
+            return gallant.TrustedPeers
+                .Select(ProposeTo)
+                .FirstOrDefault(res => res.match != null);
 
-            (Prototribe bride, float trust) ProposeTo(Peer candidate)
+            (Prototribe match, float mutualTrust) ProposeTo(Peer outgoing)
             {
-                if (!matchable.TryGetValue(candidate.TargetId, out var bride)) return default;
-                foreach (var mutualTrust in bride.SortedPeers)
-                {
-                    if (mutualTrust.Trust <= 0)
-                        return default;
-                    if (mutualTrust.TargetId == gallant.Id)
-                        return (bride, mutualTrust.Trust);
-                }
-                return default;
+                if (!matchable.TryGetValue(outgoing.TargetId, out var candidate))
+                    return default;
+                var incoming = candidate.TrustedPeers
+                    .FirstOrDefault(p => p.TargetId == gallant.Id);
+                return incoming.TargetId == 0 ? default : (candidate, outgoing.Trust + incoming.Trust);
             }
         }
 
         private static Prototribe FindHome(Prototribe visitor, Dictionary<int, Prototribe> matchable)
         {
-            foreach (var candidate in visitor.SortedPeers)
-            {
-                if (candidate.Trust <= 0)
-                    return null;
-                var home = GetHome(candidate);
-                if (home != null)
-                    return home;
-            }
-            return null;
+            return visitor.TrustedPeers
+                .Select(GetHome)
+                .FirstOrDefault(home => home != null);
 
             Prototribe GetHome(Peer candidate)
-            {
-                if (!matchable.TryGetValue(candidate.TargetId, out var home)) 
-                    return null;
-                foreach (var peer in home.SortedPeers)
-                {
-                    if (peer.Trust <= 0)
-                        return null;
-                    if (peer.TargetId == visitor.Id)
-                        return home;
-                }
-                return null;
-            }
+                => matchable.TryGetValue(candidate.TargetId, out var home)
+                && home.TrustedPeers.Any(p => p.TargetId == visitor.Id)
+                    ? home
+                    : null;
         }
 
         private static void MergePairs(Prototribe left, Prototribe right, float mutualTrust)
         {
-            MergeIndividuals(left, right);
-            MergePopularity(left, right, mutualTrust);
+            left.Individuals = MergeIndividuals(left, right);
+            left.Popularity = MergePopularity(left, right, mutualTrust);
             left.SortedPeers = MergePeers(left, right);
         }
 
-        private static void MergePopularity(Prototribe to, Prototribe from, float mutualTrust)
-        {
-            to.Popularity = to.Popularity + from.Popularity - mutualTrust;
-        }
+        private static float MergePopularity(Prototribe to, Prototribe from, float mutualTrust)
+            => to.Popularity + from.Popularity - mutualTrust;
 
-        private static void MergeIndividuals(Prototribe to, Prototribe from)
+        private static Individual[] MergeIndividuals(Prototribe to, Prototribe from)
         {
             var newIndividuals = new Individual[to.Individuals.Length + from.Individuals.Length];
             Array.Copy(to.Individuals, newIndividuals, to.Individuals.Length);
             Array.Copy(from.Individuals, 0, newIndividuals, to.Individuals.Length, from.Individuals.Length);
-            to.Individuals = newIndividuals;
+            return newIndividuals;
         }
 
         private static Peer[] MergePeers(Prototribe next, Prototribe match)
@@ -150,16 +124,12 @@ namespace Netocracy.Console.Business
 
         private static void AddTrust(Dictionary<int, float> mergedTrust, int targetId, float trust)
         {
-            var found = mergedTrust.TryGetValue(targetId, out var val);
-            if (found)
-            {
-                if (val == -trust)
-                    mergedTrust.Remove(targetId);
-                else
-                    mergedTrust[targetId] = val + trust;
-            }
-            else if (val != -trust)
+            if (!mergedTrust.TryGetValue(targetId, out var val))
                 mergedTrust.Add(targetId, trust);
+            else if (val == -trust)
+                mergedTrust.Remove(targetId);
+            else
+                mergedTrust[targetId] = val + trust;
         }
 
         private static Peer[] GenerateMergedPeers(Dictionary<int, float> mergedTrust)
@@ -167,9 +137,7 @@ namespace Netocracy.Console.Business
             var mergedPeers = new Peer[mergedTrust.Count];
             var i = 0;
             foreach (var t in mergedTrust)
-            {
                 mergedPeers[i++] = new Peer(t.Key, t.Value);
-            }
             Array.Sort(mergedPeers);
             return mergedPeers;
         }
