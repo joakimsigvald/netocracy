@@ -1,6 +1,6 @@
 ﻿namespace Netocracy.Console.Business
 {
-    public class Pair
+    public class Prototribe
     {
         public int Id { get; set; }
         public bool IsMatched { get; set; }

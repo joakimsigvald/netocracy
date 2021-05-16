@@ -5,10 +5,6 @@ namespace Netocracy.Console.Business
 {
     public class Individual : IEquatable<Individual>
     {
-        public Individual()
-        {
-        }
-
         public Individual(int id, params Peer[] peers)
         {
             Id = id;
@@ -16,8 +12,6 @@ namespace Netocracy.Console.Business
         }
 
         public int Id { get; set; }
-        public float LowerMatchThreshold { get; set; }
-        public float UpperMatchThreshold { get; set; }
         public Peer[] Peers { get; set; }
 
         public bool Equals(Individual other)

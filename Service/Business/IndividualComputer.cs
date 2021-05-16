@@ -90,7 +90,10 @@ namespace Netocracy.Console.Business
             => string.Join('\n', individuals.AsParallel().Select(Serialize));
 
         public static Individual[] DeserializeIndividuals(string str)
-            => str.Split('\n').AsParallel().Select(Deserialize).ToArray();
+            => str.Split('\n').AsParallel()
+            .Select(Deserialize)
+            .OrderBy(i => i.Id)
+            .ToArray();
 
         public static string Serialize(Individual individual)
             => $"{individual.Id}:{Serialize(individual.Peers)}";

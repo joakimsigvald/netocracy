@@ -36,11 +36,7 @@ namespace Netocracy.Console.Business.Test
             var peers = parts[1].Split(',', System.StringSplitOptions.RemoveEmptyEntries);
             var friends = peers.Where(p => p[0] == '+').Select(s => new Peer(int.Parse(s[1..]), 1)).ToArray();
             var foes = peers.Where(p => p[0] == '-').Select(s => new Peer(int.Parse(s[1..]), 1)).ToArray();
-            return new Individual
-            {
-                Id = id,
-                Peers = friends.Concat(foes).ToArray()
-            };
+            return new Individual(id, friends.Concat(foes).ToArray());
         }
 
         [Theory]

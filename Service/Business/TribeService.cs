@@ -18,10 +18,10 @@ namespace Netocracy.Console.Business
             return Task.FromResult(GenerateTribes(finalPairs));
         }
 
-        private static Dictionary<int, Pair> GeneratePairs(Dictionary<int, Pair> matchable)
+        private static Dictionary<int, Prototribe> GeneratePairs(Dictionary<int, Prototribe> matchable)
         {
             var reroute = new Dictionary<int, int>();
-            var nextPairs = new Dictionary<int, Pair>();
+            var nextPairs = new Dictionary<int, Prototribe>();
             var mergeActions = new Dictionary<int, Action>();
             foreach (var next in matchable.Values.OrderByDescending(p => p.Popularity))
             {
@@ -44,7 +44,7 @@ namespace Netocracy.Console.Business
             return nextPairs;
         }
 
-        private static IEnumerable<Pair> JoinTribes(Dictionary<int, Pair> matchable)
+        private static IEnumerable<Prototribe> JoinTribes(Dictionary<int, Prototribe> matchable)
         {
             foreach (var next in matchable.Values.OrderBy(p => p.Individuals.Length))
             {
@@ -63,7 +63,7 @@ namespace Netocracy.Console.Business
             return GenerateMergedPeers(dict);
         }
 
-        private static (Pair gallant, Pair bride, float mutualTrust) FindMatch(Pair gallant, Dictionary<int, Pair> matchable)
+        private static (Prototribe gallant, Prototribe bride, float mutualTrust) FindMatch(Prototribe gallant, Dictionary<int, Prototribe> matchable)
         {
             foreach (var candidate in gallant.SortedPeers)
             {
@@ -75,7 +75,7 @@ namespace Netocracy.Console.Business
             }
             return default;
 
-            (Pair bride, float trust) ProposeTo(Peer candidate)
+            (Prototribe bride, float trust) ProposeTo(Peer candidate)
             {
                 if (!matchable.TryGetValue(candidate.TargetId, out var bride)) return default;
                 foreach (var mutualTrust in bride.SortedPeers)
@@ -89,7 +89,7 @@ namespace Netocracy.Console.Business
             }
         }
 
-        private static Pair FindHome(Pair visitor, Dictionary<int, Pair> matchable)
+        private static Prototribe FindHome(Prototribe visitor, Dictionary<int, Prototribe> matchable)
         {
             foreach (var candidate in visitor.SortedPeers)
             {
@@ -101,7 +101,7 @@ namespace Netocracy.Console.Business
             }
             return null;
 
-            Pair GetHome(Peer candidate)
+            Prototribe GetHome(Peer candidate)
             {
                 if (!matchable.TryGetValue(candidate.TargetId, out var home)) 
                     return null;
@@ -116,19 +116,19 @@ namespace Netocracy.Console.Business
             }
         }
 
-        private static void MergePairs(Pair left, Pair right, float mutualTrust)
+        private static void MergePairs(Prototribe left, Prototribe right, float mutualTrust)
         {
             MergeIndividuals(left, right);
             MergePopularity(left, right, mutualTrust);
             left.SortedPeers = MergePeers(left, right);
         }
 
-        private static void MergePopularity(Pair to, Pair from, float mutualTrust)
+        private static void MergePopularity(Prototribe to, Prototribe from, float mutualTrust)
         {
             to.Popularity = to.Popularity + from.Popularity - mutualTrust;
         }
 
-        private static void MergeIndividuals(Pair to, Pair from)
+        private static void MergeIndividuals(Prototribe to, Prototribe from)
         {
             var newIndividuals = new Individual[to.Individuals.Length + from.Individuals.Length];
             Array.Copy(to.Individuals, newIndividuals, to.Individuals.Length);
@@ -136,7 +136,7 @@ namespace Netocracy.Console.Business
             to.Individuals = newIndividuals;
         }
 
-        private static Peer[] MergePeers(Pair next, Pair match)
+        private static Peer[] MergePeers(Prototribe next, Prototribe match)
         {
             var dict = next.SortedPeers.ToDictionary(p => p.TargetId, p => p.Trust);
             foreach (var p in match.SortedPeers)
@@ -174,9 +174,9 @@ namespace Netocracy.Console.Business
             return mergedPeers;
         }
 
-        private static Dictionary<int, Pair> Gather(Dictionary<int, Individual> calibrated)
+        private static Dictionary<int, Prototribe> Gather(Dictionary<int, Individual> calibrated)
         {
-            var dict = new Dictionary<int, Pair>();
+            var dict = new Dictionary<int, Prototribe>();
             foreach (var ind in calibrated.Values)
                 foreach (var p in ind.Peers)
                 {
@@ -198,11 +198,11 @@ namespace Netocracy.Console.Business
             return dict;
         }
 
-        private static Tribe[] GenerateTribes(IEnumerable<Pair> pairs)
+        private static Tribe[] GenerateTribes(IEnumerable<Prototribe> pairs)
         {
             return pairs.Where(p => p.Individuals.Length > 1).Select(GenerateTribe).ToArray();
 
-            static Tribe GenerateTribe(Pair pair)
+            static Tribe GenerateTribe(Prototribe pair)
                 => new()
                 {
                     Id = $"{pair.Individuals[0].Id}-{pair.Individuals[1].Id}",
