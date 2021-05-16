@@ -247,7 +247,7 @@ namespace Netocracy.Console.Business.Test
         //[Fact]
         public async Task Test_100_000_Individuals()
         {
-            var individuals = Repository.LoadIndividuals();
+            var individuals = Repository.LoadIndividuals(100_000);
             var tribes = await ComputeTribes(individuals);
             foreach (var tribe in tribes)
                 Assert.True(tribe.Admiration >= 0);

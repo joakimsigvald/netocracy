@@ -13,13 +13,18 @@ namespace Netocracy.Console.Business
             var calibrated = individuals.ToDictionary(ind => ind.Id);
             var matchable = Gather(calibrated);
             var lastCount = 0;
+            var round = 0;
             do
             {
                 lastCount = matchable.Count;
+                round++;
                 matchable = GeneratePairs(matchable);
             }
-            while (lastCount > matchable.Count);
-            return Task.FromResult(GenerateTribes(matchable.Values));
+            while (round < 20 && lastCount > matchable.Count);
+            var finalPairs = (lastCount == matchable.Count
+                ? matchable.Values
+                : JoinTribes(matchable)).ToArray();
+            return Task.FromResult(GenerateTribes(finalPairs));
         }
 
         private static Dictionary<int, Pair> GeneratePairs(Dictionary<int, Pair> matchable)
@@ -32,21 +37,12 @@ namespace Netocracy.Console.Business
                 if (next.IsMatched) continue;
                 matchable.Remove(next.Id);
                 nextPairs.Add(next.Id, next);
-                do
-                {
-                    var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
-                    if (bride == null) break;
-                    matchable.Remove(bride.Id);
-                    bride.IsMatched = true;
-                    reroute[bride.Id] = next.Id;
-                    if (bride.SortedPeers.Length > 1 && bride.SortedPeers[1].Trust > 0) {
-                        mergeActions.Add(gallant.Id, () => MergePairs(gallant, bride, mutualTrust));
-                        break;
-                    }
-                    else
-                        AddPair(gallant, bride, mutualTrust);
-                }
-                while (true);
+                var (gallant, bride, mutualTrust) = FindMatch(next, matchable);
+                if (bride == null) continue;
+                matchable.Remove(bride.Id);
+                bride.IsMatched = true;
+                reroute[bride.Id] = next.Id;
+                mergeActions.Add(gallant.Id, () => MergePairs(gallant, bride, mutualTrust));
             }
             nextPairs.Values.AsParallel().ForAll(p =>
             {
@@ -55,6 +51,17 @@ namespace Netocracy.Console.Business
                 p.SortedPeers = ReroutePeers(p.SortedPeers, reroute);
             });
             return nextPairs;
+        }
+
+        private static IEnumerable<Pair> JoinTribes(Dictionary<int, Pair> matchable)
+        {
+            foreach (var next in matchable.Values.OrderBy(p => p.Individuals.Length))
+            {
+                matchable.Remove(next.Id);
+                var home = FindHome(next, matchable);
+                if (home == null) yield return next;
+                else MergeIndividuals(home, next);
+            }
         }
 
         private static Peer[] ReroutePeers(Peer[] peers, Dictionary<int, int> reroute)
@@ -91,18 +98,38 @@ namespace Netocracy.Console.Business
             }
         }
 
+        private static Pair FindHome(Pair visitor, Dictionary<int, Pair> matchable)
+        {
+            foreach (var candidate in visitor.SortedPeers)
+            {
+                if (candidate.Trust <= 0)
+                    return null;
+                var home = GetHome(candidate);
+                if (home != null)
+                    return home;
+            }
+            return null;
+
+            Pair GetHome(Peer candidate)
+            {
+                if (!matchable.TryGetValue(candidate.TargetId, out var home)) 
+                    return null;
+                foreach (var peer in home.SortedPeers)
+                {
+                    if (peer.Trust <= 0)
+                        return null;
+                    if (peer.TargetId == visitor.Id)
+                        return home;
+                }
+                return null;
+            }
+        }
+
         private static void MergePairs(Pair left, Pair right, float mutualTrust)
         {
             MergeIndividuals(left, right);
             MergePopularity(left, right, mutualTrust);
             left.SortedPeers = MergePeers(left, right);
-        }
-
-        private static void AddPair(Pair left, Pair right, float mutualTrust)
-        {
-            MergeIndividuals(left, right);
-            MergePopularity(left, right, mutualTrust);
-            left.SortedPeers = RemovePeer(left.SortedPeers, right.Id);
         }
 
         private static void MergePopularity(Pair to, Pair from, float mutualTrust)

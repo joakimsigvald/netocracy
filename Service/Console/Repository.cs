@@ -5,18 +5,18 @@ namespace Netocracy.Console.Console
 {
     public static class Repository
     {
-        private const string _filename = "individuals.txt";
-
-        public static Individual[] LoadIndividuals()
+        public static Individual[] LoadIndividuals(int count)
         {
-            var json = File.ReadAllText(_filename);
+            var json = File.ReadAllText(Filename(count));
             return IndividualComputer.DeserializeIndividuals(json);
         }
 
         public static void SaveIndividuals(Individual[] individuals)
         {
             var json = IndividualComputer.SerializeIndividuals(individuals);
-            File.WriteAllText(_filename, json);
+            File.WriteAllText(Filename(individuals.Length), json);
         }
+
+        private static string Filename(int count) => $"individuals{count}.txt";
     }
 }

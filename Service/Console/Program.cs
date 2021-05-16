@@ -14,11 +14,12 @@ namespace Netocracy.Console.Console
         static async Task Main(string[] args)
         {
             var mode = (Mode)GetArg(0, "mode", args);
+            var count = GetArg(1, "count", args);
             var stopwatch = new Stopwatch();
             var individuals =
                 mode.HasFlag(Mode.CreateIndividuals)
-                ? GenerateIndividuals(args, stopwatch)
-                : LoadIndividuals(stopwatch);
+                ? GenerateIndividuals(count, args, stopwatch)
+                : LoadIndividuals(count, stopwatch);
             if (mode.HasFlag(Mode.GenerateTribes))
                 await ComputeTribes(individuals, stopwatch);
             else
@@ -34,19 +35,18 @@ namespace Netocracy.Console.Console
             System.Console.WriteLine($"Saving {individuals.Length} individuals took {stopwatch.ElapsedMilliseconds} ms");
         }
 
-        private static Individual[] LoadIndividuals(Stopwatch stopwatch)
+        private static Individual[] LoadIndividuals(int count, Stopwatch stopwatch)
         {
             System.Console.WriteLine($"Load individuals");
             stopwatch.Start();
-            var individuals = Repository.LoadIndividuals();
+            var individuals = Repository.LoadIndividuals(count);
             stopwatch.Stop();
             System.Console.WriteLine($"Loading {individuals.Length} individuals took {stopwatch.ElapsedMilliseconds} ms");
             return individuals;
         }
 
-        private static Individual[] GenerateIndividuals(string[] args, Stopwatch stopwatch)
+        private static Individual[] GenerateIndividuals(int count, string[] args, Stopwatch stopwatch)
         {
-            var count = GetArg(1, "count", args);
             var friends = GetArg(2, "friends", args);
             var foes = GetArg(3, "friends", args);
             var horizon = GetArg(4, "horizon", args);
